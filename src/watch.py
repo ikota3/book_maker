@@ -1,13 +1,12 @@
 ﻿import sys
 import time
-import subprocess
 from watchdog.observers import Observer
-from handler.handler import Handler
+from src.handler.handler import Handler
 
 
 def watch(path, extensions):
-    print(['*.%s' % extension for extension in extensions])
-    event_handler = Handler(['*.%s' % extension for extension in extensions])
+    print([f'*.{extension}' for extension in extensions])
+    event_handler = Handler([f'*.{extension}' for extension in extensions])
     observer = Observer()
     observer.schedule(event_handler, path, recursive=True)
     observer.start()
@@ -24,7 +23,7 @@ def watch(path, extensions):
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
-        print('Usage: ', '%s dir_to_watch [extensions]' % sys.argv[0])
+        print('Usage: ', f'{sys.argv[0]} dir_to_watch [extensions]')
     elif len(sys.argv) == 2:
         watch(sys.argv[1], ['pdf'])
     else:

@@ -1,4 +1,6 @@
-﻿from watchdog.events import PatternMatchingEventHandler
+﻿import os
+import subprocess
+from watchdog.events import PatternMatchingEventHandler
 
 
 class Handler(PatternMatchingEventHandler):
@@ -8,13 +10,17 @@ class Handler(PatternMatchingEventHandler):
                                       case_sensitive=False)
 
     def on_created(self, event):
-        print('created')
+        print('!Create Event!')
+        file_path = os.path.join(os.path.dirname(__file__), '../../getISBN.sh')
+        cmd = f'{file_path} {event.src_path}'
+        result = subprocess.call(cmd, shell=True)
+        print(f'Result is {result}')
 
     def on_deleted(self, event):
-        print('deleted')
+        print('!Delete Event!')
 
     def on_moved(self, event):
-        print('moved')
+        print('!Move Event!')
 
     def on_modified(self, event):
-        print('modified')
+        print('!Modify Event!')

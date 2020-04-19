@@ -22,12 +22,12 @@ rm -f .image*
 # Get total count of PDF pages
 pages=$(pdfinfo "$filepath" | grep -E "^Pages" | sed -E "s/^Pages: +//") &&
 # Generate JPEG from PDF
-pdfimages -j -l "PAGECOUNT" "$filepath" .image_h &&
+pdfimages -j -l "$PAGECOUNT" "$filepath" .image_h &&
 pdfimages -j -f $((pages - PAGECOUNT)) "$filepath" .image_t &&
 # Grep ISBN
-isbnTitle="$(zbarimg -q .image* | uniq | grep -E '^EAN-13:' | sed -E 's/^EAN-13://').pdf" &&
+isbnTitle="$(zbarimg -q .image* | sort | uniq | grep -E '^EAN-13:978' | sed -E 's/^EAN-13://').pdf" &&
 # If the ISBN was found, rename PDF file to "ISBN.pdf"
 [ "$isbnTitle" != ".pdf" ] &&
-mv "$filepath" "$(dirname "$filepath")/$isbnTitle" && rm -f .image_* && exit 0 ||
+mv "$filepath" "$(dirname "$filepath")/$isbnTitle" && rm -f .image* && exit 0 ||
 # Else, exit with error code
-echo "Error getting ISBN from $(basebane filepath)" && rm -f .image_* && exit 1
+rm -f .image* && exit 1

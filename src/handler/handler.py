@@ -13,14 +13,21 @@ class Handler(PatternMatchingEventHandler):
         print('!Create Event!')
         file_path = os.path.join(os.path.dirname(__file__), '../../getISBN.sh')
         cmd = f'{file_path} {event.src_path}'
-        result = subprocess.call(cmd, shell=True)
-        print(f'Result is {result}')
+        # result = subprocess.call(cmd, shell=True)
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        if result.returncode == 0:
+            # Retrieve ISBN
+            isbn = result.stdout.strip()
+            print('isbn -> ' + isbn.strip())
+        else:
+            # Get isbn from pdf text
+            print('cannot get isbn')
 
-    def on_deleted(self, event):
-        print('!Delete Event!')
-
-    def on_moved(self, event):
-        print('!Move Event!')
-
-    def on_modified(self, event):
-        print('!Modify Event!')
+    # def on_deleted(self, event):
+    #     print('!Delete Event!')
+    #
+    # def on_moved(self, event):
+    #     print('!Move Event!')
+    #
+    # def on_modified(self, event):
+    #     print('!Modify Event!')

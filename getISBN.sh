@@ -1,17 +1,13 @@
 #!/bin/bash
 
 # Number of pages to check in PDF
-PAGECOUNT=1
+PAGE_COUNT=1
 # File path
-filepath="$1"
-
-echo "Start extracting ISBN from barcode."
-echo "Extract from $(basename "$filepath")"
+FILE_PATH="$1"
 
 # If the file extension is not pdf
 shopt -s nocasematch
 if [[ ! $1 =~ .+(\.pdf)$ ]]; then
-  echo "[ERROR] This file is not PDF."
   exit 1
 fi
 shopt -u nocasematch
@@ -20,14 +16,14 @@ shopt -u nocasematch
 rm -f .image*
 
 # Get total count of PDF pages
-pages=$(pdfinfo "$filepath" | grep -E "^Pages" | sed -E "s/^Pages: +//") &&
+pages=$(pdfinfo "$FILE_PATH" | grep -E "^Pages" | sed -E "s/^Pages: +//") &&
 # Generate JPEG from PDF
-pdfimages -j -l "$PAGECOUNT" "$filepath" .image_h &&
-pdfimages -j -f $((pages - PAGECOUNT)) "$filepath" .image_t &&
+pdfimages -j -l "$PAGE_COUNT" "$FILE_PATH" .image_h &&
+pdfimages -j -f $((pages - PAGE_COUNT)) "$FILE_PATH" .image_t &&
 # Grep ISBN
-isbnTitle="$(zbarimg -q .image* | sort | uniq | grep -E '^EAN-13:978' | sed -E 's/^EAN-13://').pdf" &&
-# If the ISBN was found, rename PDF file to "ISBN.pdf"
-[ "$isbnTitle" != ".pdf" ] &&
-mv "$filepath" "$(dirname "$filepath")/$isbnTitle" && rm -f .image* && exit 0 ||
+isbnTitle="$(zbarimg -q .image* | sort | uniq | grep -E '^EAN-13:978' | sed -E 's/^EAN-13://')" &&
+# If the ISBN was found, echo the ISBN
+[ "$isbnTitle" != "" ] &&
+echo "$isbnTitle" && rm -f .image* && exit 0 ||
 # Else, exit with error code
 rm -f .image* && exit 1

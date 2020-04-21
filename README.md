@@ -13,6 +13,11 @@
 
 ### Requirements
 
+- Install Poppler(for PDF command)
+    ```
+    $ brew install poppler
+    ```
+
 - Install Tesseract(for OCR)
     ```
     $ brew install tesseract
@@ -25,7 +30,7 @@
     - pyocr
     - pyzbar
 
-- Install  
+- Install Library
     ```
     $ pip3 install -r requirement.txt
     ```

@@ -132,3 +132,4 @@ dmypy.json
 .idea/
 test_to_watch/
 .DS_Store
+.vscode/

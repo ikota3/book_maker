@@ -4,3 +4,4 @@ pillow
 pyocr
 pyzbar
 requests
+python-box=4.2.3

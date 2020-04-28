@@ -3,3 +3,4 @@ pdf2image
 pillow
 pyocr
 pyzbar
+requests

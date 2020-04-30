@@ -21,7 +21,7 @@ pages=$(pdfinfo "$FILE_PATH" | grep -E "^Pages" | sed -E "s/^Pages: +//") &&
 pdfimages -j -l "$PAGE_COUNT" "$FILE_PATH" .image_h &&
 pdfimages -j -f $((pages - PAGE_COUNT)) "$FILE_PATH" .image_t &&
 # Grep ISBN
-isbnTitle="$(zbarimg -q .image* | sort | uniq | grep -E '^EAN-13:978' | sed -E 's/^EAN-13://')" &&
+isbnTitle="$(zbarimg -q .image* | sort | uniq | grep -E '^EAN-13:978' | sed -E 's/^EAN-13://' | sed 's/-//')" &&
 # If the ISBN was found, echo the ISBN
 [ "$isbnTitle" != "" ] &&
 echo "$isbnTitle" && rm -f .image* && exit 0 ||

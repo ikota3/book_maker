@@ -28,13 +28,13 @@
     ```
 
 - Library
-    - watchdog
-    - pdf2image
-    - pyocr
-    - pyzbar
-    - pillow
-    - requests
-    - python-box
+    - [watchdog](https://github.com/gorakhargosh/watchdog)
+    - [pdf2image](https://github.com/Belval/pdf2image)
+    - [pyocr](https://gitlab.gnome.org/World/OpenPaperwork/pyocr)
+    - [pyzbar](https://github.com/NaturalHistoryMuseum/pyzbar)
+    - [pillow](https://github.com/python-pillow/Pillow)
+    - [requests](https://github.com/psf/requests)
+    - [python-box](https://github.com/cdgriffith/Box)
 
 - Install Library
     ```

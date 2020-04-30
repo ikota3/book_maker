@@ -24,12 +24,12 @@ def get_isbn_from_pdf(input_path):
     """
     tools = pyocr.get_available_tools()
     if len(tools) == 0:
-        print('[ERROR] No OCR tool found.')
+        print('[ERROR] No OCR tool found.', flush=True)
         sys.exit()
 
     input_path = input_path
     texts = []
-    cmd = f'echo $(pdfinfo {input_path} | grep -E "^Pages" | sed -E "s/^Pages: +//")'
+    cmd = f'echo $(pdfinfo "{input_path}" | grep -E "^Pages" | sed -E "s/^Pages: +//")'
     result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
     total_page_count = int(result.stdout.strip())
 

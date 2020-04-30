@@ -9,6 +9,9 @@
         - Pythonコード上で, バーコードから取得.
         - Pythonコード上で, テキストから取得.
 4. 各APIから、ISBNを元に書籍情報を取得
+    - 使用しているAPI
+        - [Google Books APIs](https://developers.google.com/books?hl=ja)
+        - [openBD](https://openbd.jp/)
 5. ファイル名を修正し、ファイルを適切なディレクトリに移動
 
 ### Requirements
@@ -29,6 +32,9 @@
     - pdf2image
     - pyocr
     - pyzbar
+    - pillow
+    - requests
+    - python-box
 
 - Install Library
     ```
@@ -36,4 +42,6 @@
     ```
 
 ### How to use
-- `python3 src/watch.py dir_to_watch [*extensions]`
+```
+$ python3 src/watch.py input_path output_path [*extensions]
+```

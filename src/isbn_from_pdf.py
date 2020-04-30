@@ -43,15 +43,11 @@ def get_isbn_from_pdf(input_path):
             decoded_data = decode(page)
             for data in decoded_data:
                 if re.match('978', data[0].decode('utf-8', 'ignore')):
-                    return data[0].decode('utf-8', 'ignore')
+                    return data[0].decode('utf-8', 'ignore').replace('-', '')
 
         # convert image to string and extract ISBN
         tool = tools[0]
-        print(f'Using tool {tool.get_name()}.')
-        languages = tool.get_available_languages()
-        print(f'Available languages: {", ".join(languages)}.')
         lang = 'jpn'
-        print(f'Using language: {lang}.')
         for page in last_pages:
             text = tool.image_to_string(
                 page,
@@ -61,6 +57,6 @@ def get_isbn_from_pdf(input_path):
             texts.append(text)
         for text in texts:
             if re.search(r'ISBN978-[0-4]-[0-9]{4}-[0-9]{4}-[0-9]', text):
-                return re.findall(r'ISBN978-[0-4]-[0-9]{4}-[0-9]{4}-[0-9]', text).pop()
+                return re.findall(r'978-[0-4]-[0-9]{4}-[0-9]{4}-[0-9]', text).pop().replace('-', '')
 
     raise NoSuchISBNException('Cannot find ISBN.')

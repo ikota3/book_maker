@@ -38,10 +38,10 @@
 
 - Install Library
     ```
-    $ pip3 install -r requirement.txt
+    $ pip3 install -r requirements.txt
     ```
 
 ### How to use
 ```
-$ python3 src/watch.py input_path output_path [*extensions]
+$ python3 src/watch.py input_path [output_path] [*extensions]
 ```

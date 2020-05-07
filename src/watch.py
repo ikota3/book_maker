@@ -10,7 +10,7 @@ def watch(input_path, output_path, extensions):
                             output_path=output_path,
                             patterns=[f'*.{extension}' for extension in extensions])
     observer = Observer()
-    observer.schedule(event_handler, input_path, recursive=True)
+    observer.schedule(event_handler, input_path, recursive=False)
     observer.start()
     print('--Start Observer--', flush=True)
     try:

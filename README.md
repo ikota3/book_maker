@@ -47,4 +47,4 @@ $ python3 src/watch.py input_path [output_path] [*extensions]
 ```
 
 ### ちょっとした説明
-(自炊するにあたってﾁｮｯﾄ自動化しようとした話)[https://qiita.com/ikota3/items/2eda80dc6906a8613a31]
+[自炊するにあたってﾁｮｯﾄ自動化しようとした話](https://qiita.com/ikota3/items/2eda80dc6906a8613a31)

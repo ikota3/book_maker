@@ -39,15 +39,16 @@ class Handler(PatternMatchingEventHandler):
 
     def _book_info_from_each_api(self, isbn, event_src_path):
         google_book_info = book_info_from_google(isbn)
-        openbd_book_info = book_info_from_openbd(isbn)
         if google_book_info:
             print(f'<Google> title: {google_book_info.title}, author: {google_book_info.author}', flush=True)
             self._rename_and_move_pdf(google_book_info, event_src_path)
-        elif openbd_book_info:
-            print(f'<openBD> title: {openbd_book_info.title}, author: {openbd_book_info.author}', flush=True)
-            self._rename_and_move_pdf(openbd_book_info, event_src_path)
         else:
-            raise NoSuchBookInfoException('Cannot find book info from google and openBD.')
+            openbd_book_info = book_info_from_openbd(isbn)
+            if openbd_book_info:
+                print(f'<openBD> title: {openbd_book_info.title}, author: {openbd_book_info.author}', flush=True)
+                self._rename_and_move_pdf(openbd_book_info, event_src_path)
+            else:
+                raise NoSuchBookInfoException('Cannot find book info from google and openBD.')
 
     def _rename_and_move_pdf(self, book_info, event_src_path):
         # Rename pdf file to formatted name

@@ -22,10 +22,6 @@ def get_isbn_from_pdf(input_path):
 
     :return: ISBN
     """
-    tools = pyocr.get_available_tools()
-    if len(tools) == 0:
-        print('[ERROR] No OCR tool found.', flush=True)
-        sys.exit()
 
     input_path = input_path
     texts = []
@@ -45,6 +41,10 @@ def get_isbn_from_pdf(input_path):
                 if re.match('978', data[0].decode('utf-8', 'ignore')):
                     return data[0].decode('utf-8', 'ignore').replace('-', '')
 
+        tools = pyocr.get_available_tools()
+        if len(tools) == 0:
+            print('[ERROR] No OCR tool found.', flush=True)
+            sys.exit()
         # convert image to string and extract ISBN
         tool = tools[0]
         lang = 'jpn'

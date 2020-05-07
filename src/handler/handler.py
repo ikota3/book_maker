@@ -58,10 +58,10 @@ class Handler(PatternMatchingEventHandler):
         output_path_with_basename = os.path.join(self.output_path, os.path.basename(pdf_rename_path))
         if os.path.isfile(output_path_with_basename):
             shutil.move(pdf_rename_path, self.tmp_path)
-            print(f'PDF file already exists! Move {os.path.basename(event_src_path)} to {self.tmp_path}', flush=True)
+            print(f'PDF file already exists! Move {os.path.basename(pdf_rename_path)} to {self.tmp_path}', flush=True)
         else:
             shutil.move(pdf_rename_path, self.output_path)
-            print(f'Move {os.path.basename(event_src_path)} to {self.output_path}', flush=True)
+            print(f'Move {os.path.basename(pdf_rename_path)} to {self.output_path}', flush=True)
 
     def on_created(self, event):
         print('!Create Event!', flush=True)

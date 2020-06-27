@@ -4,11 +4,16 @@ import pyocr
 import tempfile
 import subprocess
 import pyocr.builders
+from os.path import basename
 from pyzbar.pyzbar import decode
 from pdf2image import convert_from_path
 
 
 PAGE_COUNT = 2
+
+
+class NoSuchOCRToolException(Exception):
+    pass
 
 
 class NoSuchISBNException(Exception):
@@ -43,7 +48,8 @@ def get_isbn_from_pdf(input_path):
 
         tools = pyocr.get_available_tools()
         if len(tools) == 0:
-            print('[ERROR] No OCR tool found.', flush=True)
+            # TODO delete?
+            raise NoSuchOCRToolException(f'[ERROR] Cannot find OCR tool.\n')
             sys.exit()
         # convert image to string and extract ISBN
         tool = tools[0]
@@ -59,4 +65,4 @@ def get_isbn_from_pdf(input_path):
             if re.search(r'ISBN978-[0-4]-[0-9]{4}-[0-9]{4}-[0-9]', text):
                 return re.findall(r'978-[0-4]-[0-9]{4}-[0-9]{4}-[0-9]', text).pop().replace('-', '')
 
-    raise NoSuchISBNException('Cannot find ISBN.')
+    raise NoSuchISBNException(f'[WARNING] Cannot get ISBN from image. Basename: {basename(input_path)}.\n')

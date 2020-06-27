@@ -1,24 +1,33 @@
 import os
+import asyncio
+import threading
 from datetime import datetime
 from tkinter import (
+    N,
+    S,
     E,
     W,
     EW,
     NSEW,
+    VERTICAL,
     Tk,
     Frame,
     Button,
     Entry,
     Text,
     Label,
+    Scrollbar,
     StringVar,
     filedialog,
     messagebox
 )
 from tkinter.ttk import Combobox
 
+FILE_TYPES = [
+    'pdf'
+]
 
-FILE_TYPES = 'pdf'
+ROOT = Tk()
 
 
 class BookMakerApp(Frame):
@@ -35,7 +44,8 @@ class BookMakerApp(Frame):
 
         self.dir_to_watch_path = StringVar()
         self.file_type_value = StringVar()
-        self.log_box = {}
+        self.log_box = None
+        self.log_box_line_count = 1
 
         self._create_widgets()
 
@@ -89,6 +99,14 @@ class BookMakerApp(Frame):
         log_box.bind('<Key>', lambda e: "break")
         self.log_box = log_box
 
+        # Log scroll bar
+        scrollbar = Scrollbar(
+            main_frame,
+            orient=VERTICAL,
+            command=log_box.yview,
+        )
+        log_box['yscrollcommand'] = scrollbar.set
+
         # Export log
         log_export_button = Button(
             main_frame,
@@ -123,12 +141,14 @@ class BookMakerApp(Frame):
         log_label.grid(
             row=3, column=0, sticky=W, pady=(7, 0)
         )
+        log_export_button.grid(
+            row=3, column=1, columnspan=2, sticky=E, pady=(0, 7)
+        )
         log_box.grid(
             row=4, column=0, columnspan=3, sticky=NSEW
         )
-
-        log_export_button.grid(
-            row=3, column=1, columnspan=2, sticky=E, pady=(0, 7)
+        scrollbar.grid(
+            row=4, column=1, columnspan=2, sticky=(N, S, E), padx=(1, 1), pady=(1, 1)
         )
 
         # Fit the main frame to master
@@ -159,15 +179,27 @@ class BookMakerApp(Frame):
             messagebox.showerror('入力エラー', 'ディレクトリではありません')
             return
 
-        if not self.file_type_value.get():
+        if not self.file_type_value.get() or not self.file_type_value.get() in FILE_TYPES:
             messagebox.showerror(
                 '入力エラー',
                 'ファイルの種類が選択されていません\n' + ', '.join(FILE_TYPES) + 'の中から選択してください'
             )
             return
+        print('from components.py')
+        print(hex(id(self.log_box)))
 
-        # TODO insert all print content to log box
-        # TODO colorize
+        # TODO Fix to call the process in the background
+        # from src.watch import watch
+        # self.after(
+        #     100,
+        #     watch(self.dir_to_watch_path.get(), self.dir_to_watch_path.get(), [self.file_type_value.get()])
+        # )
+        # async_loop = asyncio.get_event_loop()
+        # def _asyncio_thread(async_loop):
+        #     async_loop.run_until_complete(
+        #         watch(self.dir_to_watch_path.get(), self.dir_to_watch_path.get(), [self.file_type_value.get()])
+        #     )
+        # threading.Thread(target=_asyncio_thread, args=(async_loop,)).start()
 
     def _export_log(self):
         """
@@ -180,21 +212,40 @@ class BookMakerApp(Frame):
             return
 
         filename = datetime.now().strftime('%Y%m%d_%H%M%S_LOG.txt')
-        willSave = messagebox.askyesnocancel(
+        will_save = messagebox.askyesnocancel(
             '保存',
             f'{filename}で保存します\n続行しますか?'
         )
-        if not willSave:
+        if not will_save:
             return
 
         log_text = self.log_box.get(1.0, 'end-1c')
         with open(file=f'{dir_name}/{filename}', mode='w', encoding='utf-8') as f:
             f.write(log_text)
 
+    def insert_to_log_box(self, text):
+        """
+        Insert text content to log box.
+        :param text: string
+        """
+        if not text:
+            return
+        print(text)
+        self.log_box.insert(float(self.log_box_line_count), f'{text}\n')
+        self.log_box_line_count += 1
+
+    @classmethod
+    def get_instance(cls, master=ROOT):
+        if not hasattr(cls, '_instance'):
+            cls._instance = cls(master)
+        else:
+            cls._instance.master = master
+        return cls._instance
+
 
 def main():
-    root = Tk()
-    app = BookMakerApp(root)
+    global ROOT
+    app = BookMakerApp(ROOT)
     app.mainloop()
 
 

@@ -51,7 +51,7 @@ def book_info_from_google(isbn):
             author = google_item.volume_info.authors[0]
             return BookInfo(title=title, author=author)
     else:
-        print(f'[WARNING] Google status code was {res.status_code}', flush=True)
+        raise NoSuchBookInfoException(f'[WARNING] Cannot get book info from Google. ISBN: {isbn}. Status Code: {res.status_code}.\n')
 
 
 def book_info_from_openbd(isbn):
@@ -64,4 +64,4 @@ def book_info_from_openbd(isbn):
             author = _format_author(open_bd_summary.author)
             return BookInfo(title=title, author=author)
     else:
-        print(f'[WARNING] openBD status code was {res.status_code}', flush=True)
+        raise NoSuchBookInfoException(f'[WARNING] Cannot get book info from OPENBD. ISBN: {isbn}. Status Code: {res.status_code}.\n')

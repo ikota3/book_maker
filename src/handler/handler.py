@@ -38,17 +38,32 @@ class Handler(PatternMatchingEventHandler):
             os.rmdir(self.output_path)
 
     def _book_info_from_each_api(self, isbn, event_src_path):
-        google_book_info = book_info_from_google(isbn)
+        google_book_info = None
+        try:
+            google_book_info = book_info_from_google(isbn)
+        except NoSuchBookInfoException:
+            # TODO pass to log box
+            pass
+
         if google_book_info:
+            # TODO pass to log box
             print(f'<Google> title: {google_book_info.title}, author: {google_book_info.author}', flush=True)
             self._rename_and_move_pdf(google_book_info, event_src_path)
-        else:
+            return
+
+        openbd_book_info = None
+        try:
             openbd_book_info = book_info_from_openbd(isbn)
-            if openbd_book_info:
-                print(f'<openBD> title: {openbd_book_info.title}, author: {openbd_book_info.author}', flush=True)
-                self._rename_and_move_pdf(openbd_book_info, event_src_path)
-            else:
-                raise NoSuchBookInfoException('Cannot find book info from google and openBD.')
+        except NoSuchBookInfoException:
+            # TODO pass to log box
+            # raise the error
+            raise
+            pass
+
+        if openbd_book_info:
+            # TODO pass to log box
+            print(f'<openBD> title: {openbd_book_info.title}, author: {openbd_book_info.author}', flush=True)
+            self._rename_and_move_pdf(openbd_book_info, event_src_path)
 
     def _rename_and_move_pdf(self, book_info, event_src_path):
         # Rename pdf file to formatted name
@@ -59,13 +74,14 @@ class Handler(PatternMatchingEventHandler):
         output_path_with_basename = os.path.join(self.output_path, os.path.basename(pdf_rename_path))
         if os.path.isfile(output_path_with_basename):
             shutil.move(pdf_rename_path, self.tmp_path)
+            # TODO pass to log box
             print(f'PDF file already exists! Move {os.path.basename(pdf_rename_path)} to {self.tmp_path}', flush=True)
         else:
             shutil.move(pdf_rename_path, self.output_path)
+            # TODO pass to log box
             print(f'Move {os.path.basename(pdf_rename_path)} to {self.output_path}', flush=True)
 
     def on_created(self, event):
-        print('!Create Event!', flush=True)
         shell_path = os.path.join(os.path.dirname(__file__), '../../getISBN.sh')
         event_src_path = event.src_path
         cmd = f'{shell_path} {event_src_path}'
@@ -74,16 +90,23 @@ class Handler(PatternMatchingEventHandler):
             if result.returncode == 0:
                 # Retrieve ISBN from shell
                 isbn = result.stdout.strip()
+                # TODO pass to log box
                 print(f'ISBN from Shell -> {isbn}', flush=True)
                 self._book_info_from_each_api(isbn, event_src_path)
 
             else:
                 # Get ISBN from pdf barcode or text
                 isbn = get_isbn_from_pdf(event_src_path)
+                # TODO pass to log box
                 print(f'ISBN from Python -> {isbn}', flush=True)
                 self._book_info_from_each_api(isbn, event_src_path)
 
         except (NoSuchISBNException, NoSuchBookInfoException) as e:
-            print(e.args[0], flush=True)
+            # NoSuchISBNException will be thrown when the shell command has failure, and cannot find isbn using python.
+            if isinstance(e, NoSuchISBNException):
+                # TODO pass to log box
+                pass
+
             shutil.move(event_src_path, self.tmp_path)
+            # TODO pass to log box
             print(f'Move {os.path.basename(event_src_path)} to {self.tmp_path}', flush=True)

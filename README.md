@@ -42,9 +42,11 @@
     ```
 
 ### How to use
-```
-$ python3 src/watch.py input_path [output_path] [*extensions]
-```
+- CLI
+    ```
+    $ git checkout 991d4cafa31dbf636f95d7717c608c31de4ed825
+    $ python3 src/watch.py input_path [output_path] [*extensions]
+    ```
 
 ### ちょっとした説明
 [自炊するにあたってﾁｮｯﾄ自動化しようとした話](https://qiita.com/ikota3/items/2eda80dc6906a8613a31)

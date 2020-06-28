@@ -48,5 +48,14 @@
     $ python3 src/watch.py input_path [output_path] [*extensions]
     ```
 
+- GUI
+    - Macで起動する際に，tkinterのバージョンが8.6ではないとき，正しく表示されない場合があります．  
+    私は下記の記事でtkinterのバージョンを更新できました．  
+    [pyenvのpythonでtkinterを使用する方法](https://qiita.com/skyloken/items/a5f839eba1bd79cd5ef9)
+    
+    ```
+    $ python3 src/gui/components.py
+    ```
+
 ### ちょっとした説明
 [自炊するにあたってﾁｮｯﾄ自動化しようとした話](https://qiita.com/ikota3/items/2eda80dc6906a8613a31)

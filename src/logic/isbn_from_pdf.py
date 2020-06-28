@@ -1,5 +1,4 @@
 ﻿import re
-import sys
 import pyocr
 import tempfile
 import subprocess
@@ -7,7 +6,6 @@ import pyocr.builders
 from os.path import basename
 from pyzbar.pyzbar import decode
 from pdf2image import convert_from_path
-
 
 PAGE_COUNT = 2
 

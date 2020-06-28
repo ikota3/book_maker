@@ -21,7 +21,8 @@ from tkinter import (
     messagebox
 )
 from tkinter.ttk import Combobox
-from src.gui.log_handler import LogStatus
+from src.handler.watch import Watcher
+from src.constants.log_constants import LogStatus
 
 FILE_TYPES = [
     'pdf'
@@ -202,7 +203,15 @@ class BookMakerApp(Frame):
             )
             return
 
-        from src.watch import Watcher
+        if self.watcher_is_running:
+            will_switch = messagebox.askyesnocancel(
+                'エラー',
+                'すでに実行中です\n監視している対象ディレクトリを切り替えますか?'
+            )
+            if not will_switch:
+                return
+            self._stop()
+
         self.watcher_is_running = True
         self.watcher_thread = Watcher(
             queue=self.queue,
@@ -237,8 +246,15 @@ class BookMakerApp(Frame):
         When user clicked "停止"
         Tell the thread to stop the observer
         """
-        self.watcher_thread.stop()
-        self.after(100, self.insert_to_log_box)
+        if self.watcher_thread:
+            self.watcher_thread.stop()
+            self.after(100, self.insert_to_log_box)
+            self.watcher_thread = None  # TODO FIX?
+        else:
+            messagebox.showwarning(
+                'エラー',
+                '実行されていないため停止することができません\n実行を行ったうえで停止することができます'
+            )
 
     def _export_log(self):
         """

@@ -2,7 +2,7 @@
 import threading
 from watchdog.observers import Observer
 from src.handler.handler import Handler
-from src.gui.log_handler import Message, LogStatus
+from src.constants.log_constants import Message, LogStatus
 
 
 class Watcher(threading.Thread):

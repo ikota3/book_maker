@@ -2,10 +2,10 @@
 import shutil
 import datetime
 import subprocess
-from src.isbn_from_pdf import get_isbn_from_pdf, NoSuchISBNException, NoSuchOCRToolException
 from watchdog.events import PatternMatchingEventHandler
-from src.bookinfo_from_isbn import book_info_from_google, book_info_from_openbd, NoSuchBookInfoException
-from src.gui.log_handler import Message, LogStatus
+from src.logic.isbn_from_pdf import get_isbn_from_pdf, NoSuchISBNException, NoSuchOCRToolException
+from src.logic.bookinfo_from_isbn import book_info_from_google, book_info_from_openbd, NoSuchBookInfoException
+from src.constants.log_constants import Message, LogStatus
 
 
 class Handler(PatternMatchingEventHandler):

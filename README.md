@@ -54,7 +54,7 @@
     [pyenvのpythonでtkinterを使用する方法](https://qiita.com/skyloken/items/a5f839eba1bd79cd5ef9)
     
     ```
-    $ python3 src/gui/components.py
+    $ python3 src/gui/app.py
     ```
 
 ### ちょっとした説明

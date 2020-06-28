@@ -3,7 +3,6 @@ import json
 import requests
 from box import Box
 
-
 GOOGLE_API_KEY = None
 if GOOGLE_API_KEY:
     GOOGLE_API_URL = 'https://www.googleapis.com/books/v1/volumes?q=isbn:{}' + f'&key={GOOGLE_API_KEY}'
@@ -51,7 +50,9 @@ def book_info_from_google(isbn):
             author = google_item.volume_info.authors[0]
             return BookInfo(title=title, author=author)
     else:
-        raise NoSuchBookInfoException(f'[WARNING] Cannot get book info from Google. ISBN: {isbn}. Status Code: {res.status_code}.\n')
+        raise NoSuchBookInfoException(
+            f'Cannot get book info from Google. ISBN: {isbn}. Status Code: {res.status_code}.'
+        )
 
 
 def book_info_from_openbd(isbn):
@@ -64,4 +65,6 @@ def book_info_from_openbd(isbn):
             author = _format_author(open_bd_summary.author)
             return BookInfo(title=title, author=author)
     else:
-        raise NoSuchBookInfoException(f'[WARNING] Cannot get book info from OPENBD. ISBN: {isbn}. Status Code: {res.status_code}.\n')
+        raise NoSuchBookInfoException(
+            f'Cannot get book info from OPENBD. ISBN: {isbn}. Status Code: {res.status_code}.'
+        )

@@ -1,6 +1,5 @@
 import os
-import asyncio
-import threading
+from queue import Queue
 from datetime import datetime
 from tkinter import (
     N,
@@ -22,6 +21,7 @@ from tkinter import (
     messagebox
 )
 from tkinter.ttk import Combobox
+from src.gui.log_handler import LogStatus
 
 FILE_TYPES = [
     'pdf'
@@ -46,6 +46,9 @@ class BookMakerApp(Frame):
         self.file_type_value = StringVar()
         self.log_box = None
         self.log_box_line_count = 1
+        self.queue = Queue()
+        self.watcher_thread = None
+        self.watcher_is_running = False
 
         self._create_widgets()
 
@@ -93,6 +96,15 @@ class BookMakerApp(Frame):
             command=self._execute
         )
 
+        # Stop
+        stop_button = Button(
+            main_frame,
+            text='停止',
+            relief='solid',
+            borderwidth=1,
+            command=self._stop
+        )
+
         # Log
         log_label = Label(main_frame, text='ログ')
         log_box = Text(main_frame, relief='solid', borderwidth=1)
@@ -135,20 +147,24 @@ class BookMakerApp(Frame):
         )
 
         execute_button.grid(
-            row=2, column=0, columnspan=3, sticky=NSEW, pady=(10, 20)
+            row=2, column=0, columnspan=3, pady=(10, 20)
+        )
+
+        stop_button.grid(
+            row=3, column=0, columnspan=3, pady=(10, 20)
         )
 
         log_label.grid(
-            row=3, column=0, sticky=W, pady=(7, 0)
+            row=4, column=0, sticky=W, pady=(7, 0)
         )
         log_export_button.grid(
-            row=3, column=1, columnspan=2, sticky=E, pady=(0, 7)
+            row=4, column=1, columnspan=2, sticky=E, pady=(0, 7)
         )
         log_box.grid(
-            row=4, column=0, columnspan=3, sticky=NSEW
+            row=5, column=0, columnspan=3, sticky=NSEW
         )
         scrollbar.grid(
-            row=4, column=1, columnspan=2, sticky=(N, S, E), padx=(1, 1), pady=(1, 1)
+            row=5, column=1, columnspan=2, sticky=(N, S, E), padx=(1, 1), pady=(1, 1)
         )
 
         # Fit the main frame to master
@@ -185,28 +201,50 @@ class BookMakerApp(Frame):
                 'ファイルの種類が選択されていません\n' + ', '.join(FILE_TYPES) + 'の中から選択してください'
             )
             return
-        print('from components.py')
-        print(hex(id(self.log_box)))
 
-        # TODO Fix to call the process in the background
-        # from src.watch import watch
-        # self.after(
-        #     100,
-        #     watch(self.dir_to_watch_path.get(), self.dir_to_watch_path.get(), [self.file_type_value.get()])
-        # )
-        # async_loop = asyncio.get_event_loop()
-        # def _asyncio_thread(async_loop):
-        #     async_loop.run_until_complete(
-        #         watch(self.dir_to_watch_path.get(), self.dir_to_watch_path.get(), [self.file_type_value.get()])
-        #     )
-        # threading.Thread(target=_asyncio_thread, args=(async_loop,)).start()
+        from src.watch import Watcher
+        self.watcher_is_running = True
+        self.watcher_thread = Watcher(
+            queue=self.queue,
+            input_path=self.dir_to_watch_path.get(),
+            output_path=self.dir_to_watch_path.get(),
+            extensions=[self.file_type_value.get()],
+        )
+        self.watcher_thread.start()
+        self.after(100, self.insert_to_log_box)
+
+    def insert_to_log_box(self):
+        """
+        Insert received message from other thread to log box
+        """
+        if not self.queue.empty():
+            message = self.queue.get()
+            self.log_box.insert(
+                float(self.log_box_line_count),
+                f'[{message.status.name}] {message.message}\n'
+            )
+            self.log_box_line_count += 1
+
+            if message.status is LogStatus.COMPLETED:
+                self.watcher_is_running = False
+                return
+
+        if self.watcher_is_running:
+            self.after(100, self.insert_to_log_box)
+
+    def _stop(self):
+        """
+        When user clicked "停止"
+        Tell the thread to stop the observer
+        """
+        self.watcher_thread.stop()
+        self.after(100, self.insert_to_log_box)
 
     def _export_log(self):
         """
         When user clicked "ログを出力"
         Pop up the filedialog for asking which directory to save the log file
         """
-
         dir_name = filedialog.Directory().show()
         if not dir_name:
             return
@@ -223,19 +261,14 @@ class BookMakerApp(Frame):
         with open(file=f'{dir_name}/{filename}', mode='w', encoding='utf-8') as f:
             f.write(log_text)
 
-    def insert_to_log_box(self, text):
-        """
-        Insert text content to log box.
-        :param text: string
-        """
-        if not text:
-            return
-        print(text)
-        self.log_box.insert(float(self.log_box_line_count), f'{text}\n')
-        self.log_box_line_count += 1
-
     @classmethod
     def get_instance(cls, master=ROOT):
+        """
+        Returns a singleton instance of BookMakerApp.
+
+        :param master: default parameter is tk.Tk()
+        :return: Singleton BookMakerApp instance
+        """
         if not hasattr(cls, '_instance'):
             cls._instance = cls(master)
         else:

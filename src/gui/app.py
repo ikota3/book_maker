@@ -49,7 +49,6 @@ class BookMakerApp(Frame):
         self.log_box_line_count = 1
         self.queue = Queue()
         self.watcher_thread = None
-        self.watcher_is_running = False
 
         self._create_widgets()
 
@@ -187,15 +186,15 @@ class BookMakerApp(Frame):
         Kick to handler
         """
 
-        # Check input
+        # Check path is correct
         if not self.dir_to_watch_path.get():
             messagebox.showerror('入力エラー', '監視対象のディレクトリを選択してください')
             return
-
         if not os.path.isdir(self.dir_to_watch_path.get()):
             messagebox.showerror('入力エラー', 'ディレクトリではありません')
             return
 
+        # Check file type is correct
         if not self.file_type_value.get() or not self.file_type_value.get() in FILE_TYPES:
             messagebox.showerror(
                 '入力エラー',
@@ -203,16 +202,18 @@ class BookMakerApp(Frame):
             )
             return
 
-        if self.watcher_is_running:
+        # If the watcher thread is running, show the message box
+        if self.watcher_thread:
             will_switch = messagebox.askyesnocancel(
                 'エラー',
                 'すでに実行中です\n監視している対象ディレクトリを切り替えますか?'
             )
+            # If the user select no or cancel, return
             if not will_switch:
                 return
+            # If the user select yes, stop the watcher thread which exists
             self._stop()
 
-        self.watcher_is_running = True
         self.watcher_thread = Watcher(
             queue=self.queue,
             input_path=self.dir_to_watch_path.get(),
@@ -220,25 +221,29 @@ class BookMakerApp(Frame):
             extensions=[self.file_type_value.get()],
         )
         self.watcher_thread.start()
+        self.watcher_thread.set_event()
         self.after(100, self.insert_to_log_box)
 
     def insert_to_log_box(self):
         """
         Insert received message from other thread to log box
         """
+        # If queue is not empty, insert message to log box
         if not self.queue.empty():
             message = self.queue.get()
             self.log_box.insert(
                 float(self.log_box_line_count),
-                f'[{message.status.name}] {message.message}\n'
+                '[' + datetime.now().strftime('%Y/%m/%d_%H:%M:%S') + '] '
+                + f'<{message.status.name}> {message.message}\n'
             )
             self.log_box_line_count += 1
 
+            # If the log status was completed, return
             if message.status is LogStatus.COMPLETED:
-                self.watcher_is_running = False
                 return
 
-        if self.watcher_is_running:
+        # Recursively call function for always checking the queue is empty or not
+        if self.watcher_thread:
             self.after(100, self.insert_to_log_box)
 
     def _stop(self):
@@ -246,11 +251,13 @@ class BookMakerApp(Frame):
         When user clicked "停止"
         Tell the thread to stop the observer
         """
+        # If the watcher thread exists, stop the thread
         if self.watcher_thread:
-            self.watcher_thread.stop()
+            self.watcher_thread.stop_event()
             self.after(100, self.insert_to_log_box)
-            self.watcher_thread = None  # TODO FIX?
+            self.watcher_thread = None
         else:
+            # Show a message box, when watcher thread does not exist
             messagebox.showwarning(
                 'エラー',
                 '実行されていないため停止することができません\n実行を行ったうえで停止することができます'
@@ -260,6 +267,7 @@ class BookMakerApp(Frame):
         """
         When user clicked "ログを出力"
         Pop up the filedialog for asking which directory to save the log file
+        Save the log file when user select yes, otherwise do not save
         """
         dir_name = filedialog.Directory().show()
         if not dir_name:
@@ -273,6 +281,7 @@ class BookMakerApp(Frame):
         if not will_save:
             return
 
+        # Get all text in the log box
         log_text = self.log_box.get(1.0, 'end-1c')
         with open(file=f'{dir_name}/{filename}', mode='w', encoding='utf-8') as f:
             f.write(log_text)

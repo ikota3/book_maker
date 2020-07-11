@@ -1,4 +1,5 @@
 import os
+import math
 from queue import Queue
 from datetime import datetime
 from tkinter import (
@@ -46,7 +47,7 @@ class BookMakerApp(Frame):
         self.dir_to_watch_path = StringVar()
         self.file_type_value = StringVar()
         self.log_box = None
-        self.log_box_line_count = 1
+        self.log_box_line_count = 1.0
         self.queue = Queue()
         self.watcher_thread = None
 
@@ -107,9 +108,13 @@ class BookMakerApp(Frame):
 
         # Log
         log_label = Label(main_frame, text='ログ')
-        log_box = Text(main_frame, relief='solid', borderwidth=1)
+        log_box = Text(main_frame, relief='solid', borderwidth=1, background='#121212', foreground='#ffffff')
         log_box.bind('<Key>', lambda e: "break")
         self.log_box = log_box
+        # Set text color in the log box
+        self.log_box.tag_configure('log_time', foreground='#43d8c9')
+        for log_status in LogStatus:
+            self.log_box.tag_configure(log_status.name, foreground=log_status.value)
 
         # Log scroll bar
         scrollbar = Scrollbar(
@@ -230,16 +235,35 @@ class BookMakerApp(Frame):
         """
         # If queue is not empty, insert message to log box
         if not self.queue.empty():
-            message = self.queue.get()
+            # Time
+            log_time = '[' + datetime.now().strftime('%Y/%m/%d_%H:%M:%S') + '] '
             self.log_box.insert(
-                float(self.log_box_line_count),
-                '[' + datetime.now().strftime('%Y/%m/%d_%H:%M:%S') + '] '
-                + f'<{message.status.name}> {message.message}\n'
+                self.log_box_line_count,
+                log_time,
+                'log_time'
             )
-            self.log_box_line_count += 1
+            self.log_box_line_count += len(log_time) / 100.0
+
+            message_queue = self.queue.get()
+            # Status
+            log_status_message = f'<{message_queue.status.name}> '
+            self.log_box.insert(
+                self.log_box_line_count,
+                log_status_message,
+                f'{message_queue.status.name}'
+            )
+            self.log_box_line_count += len(log_status_message) / 100.0
+
+            # Message
+            log_message = message_queue.message + '\n'
+            self.log_box.insert(
+                self.log_box_line_count,
+                log_message
+            )
+            self.log_box_line_count = float(math.ceil(self.log_box_line_count))
 
             # If the log status was completed, return
-            if message.status is LogStatus.COMPLETED:
+            if message_queue.status is LogStatus.COMPLETED:
                 return
 
         # Recursively call function for always checking the queue is empty or not

@@ -1,5 +1,5 @@
 from collections import namedtuple
-from enum import IntEnum, auto
+from enum import Enum
 
 Message = namedtuple('Message', [
     'status',
@@ -7,8 +7,18 @@ Message = namedtuple('Message', [
 ])
 
 
-class LogStatus(IntEnum):
-    INFO = auto()
-    WARNING = auto()
-    ERROR = auto()
-    COMPLETED = auto()
+class LogStatus(Enum):
+    """
+    Enums for log status
+    The hex value is for colorizing the log
+
+    Fields:
+        INFO,
+        WARNING,
+        ERROR,
+        COMPLETED
+    """
+    INFO = '#43a047'
+    WARNING = '#fdd835'
+    ERROR = '#e53935'
+    COMPLETED = '#3949ab'

@@ -45,6 +45,7 @@ class BookMakerApp(Frame):
         self.master.title('Book Maker')
 
         self.dir_to_watch_path = StringVar()
+        self.output_dir_path = StringVar()
         self.file_type_value = StringVar()
         self.log_box = None
         self.log_box_line_count = 1.0
@@ -75,7 +76,23 @@ class BookMakerApp(Frame):
             text='参照',
             relief='solid',
             borderwidth=1,
-            command=self._ask_folder
+            command=self._ask_watch_folder
+        )
+
+        # Output dir
+        output_dir_label = Label(main_frame, text='出力ディレクトリ')
+        output_dir_entry = Entry(
+            main_frame,
+            relief='solid',
+            borderwidth=1,
+            textvariable=self.output_dir_path
+        )
+        output_dir_button = Button(
+            main_frame,
+            text='参照',
+            relief='solid',
+            borderwidth=1,
+            command=self._ask_output_folder
         )
 
         # File type
@@ -144,32 +161,42 @@ class BookMakerApp(Frame):
             row=0, column=2, padx=(7, 0), pady=(10, 10)
         )
 
-        file_type_label.grid(
+        output_dir_label.grid(
             row=1, column=0, sticky=W, padx=(0, 7), pady=(10, 10)
         )
+        output_dir_entry.grid(
+            row=1, column=1, sticky=EW, padx=(10, 10), pady=(10, 10)
+        )
+        output_dir_button.grid(
+            row=1, column=2, padx=(7, 0), pady=(10, 10)
+        )
+
+        file_type_label.grid(
+            row=2, column=0, sticky=W, padx=(0, 7), pady=(10, 10)
+        )
         file_type_combobox.grid(
-            row=1, column=1, columnspan=2, sticky=EW, padx=(7, 0), pady=(10, 10)
+            row=2, column=1, columnspan=2, sticky=EW, padx=(7, 0), pady=(10, 10)
         )
 
         execute_button.grid(
-            row=2, column=0, columnspan=3, pady=(10, 20)
-        )
-
-        stop_button.grid(
             row=3, column=0, columnspan=3, pady=(10, 20)
         )
 
+        stop_button.grid(
+            row=4, column=0, columnspan=3, pady=(10, 20)
+        )
+
         log_label.grid(
-            row=4, column=0, sticky=W, pady=(7, 0)
+            row=5, column=0, sticky=W, pady=(7, 0)
         )
         log_export_button.grid(
-            row=4, column=1, columnspan=2, sticky=E, pady=(0, 7)
+            row=5, column=1, columnspan=2, sticky=E, pady=(0, 7)
         )
         log_box.grid(
-            row=5, column=0, columnspan=3, sticky=NSEW
+            row=6, column=0, columnspan=3, sticky=NSEW
         )
         scrollbar.grid(
-            row=5, column=1, columnspan=2, sticky=(N, S, E), padx=(1, 1), pady=(1, 1)
+            row=6, column=1, columnspan=2, sticky=(N, S, E), padx=(1, 1), pady=(1, 1)
         )
 
         # Fit the main frame to master
@@ -177,13 +204,21 @@ class BookMakerApp(Frame):
         self.columnconfigure(0, weight=1)
         main_frame.columnconfigure(1, weight=1)
 
-    def _ask_folder(self):
+    def _ask_watch_folder(self):
         """
-        When user clicked "参照"
+        When user clicked "参照" for watch dir
         Pop up the filedialog for asking directory, and fill the path which user selected
         """
         path = filedialog.askdirectory()
         self.dir_to_watch_path.set(path)
+
+    def _ask_output_folder(self):
+        """
+        When user clicked "参照" for output dir
+        Pop up the filedialog for asking directory, and fill the path which user selected
+        """
+        path = filedialog.askdirectory()
+        self.output_dir_path.set(path)
 
     def _execute(self):
         """
@@ -191,11 +226,19 @@ class BookMakerApp(Frame):
         Kick to handler
         """
 
-        # Check path is correct
+        # Check watch path is correct
         if not self.dir_to_watch_path.get():
             messagebox.showerror('入力エラー', '監視対象のディレクトリを選択してください')
             return
         if not os.path.isdir(self.dir_to_watch_path.get()):
+            messagebox.showerror('入力エラー', 'ディレクトリではありません')
+            return
+
+        # Check output path is correct
+        if not self.output_dir_path.get():
+            messagebox.showerror('入力エラー', '出力対象のディレクトリを選択してください')
+            return
+        if not os.path.isdir(self.output_dir_path.get()):
             messagebox.showerror('入力エラー', 'ディレクトリではありません')
             return
 
@@ -218,11 +261,19 @@ class BookMakerApp(Frame):
                 return
             # If the user select yes, stop the watcher thread which exists
             self._stop()
+        else:
+            # If the watcher thread is not running, show the message
+            will_observe = messagebox.askyesnocancel(
+                '監視',
+                '監視を始めますか?'
+            )
+            if not will_observe:
+                return
 
         self.watcher_thread = Watcher(
             queue=self.queue,
             input_path=self.dir_to_watch_path.get(),
-            output_path=self.dir_to_watch_path.get(),
+            output_path=self.output_dir_path.get(),
             extensions=[self.file_type_value.get()],
         )
         self.watcher_thread.start()

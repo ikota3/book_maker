@@ -8,6 +8,7 @@ from tkinter import (
     E,
     W,
     EW,
+    END,
     NSEW,
     VERTICAL,
     Tk,
@@ -141,6 +142,15 @@ class BookMakerApp(Frame):
         )
         log_box['yscrollcommand'] = scrollbar.set
 
+        # Clear log
+        log_clear_button = Button(
+            main_frame,
+            text='ログをクリア',
+            relief='solid',
+            borderwidth=1,
+            command=self._clear_log
+        )
+
         # Export log
         log_export_button = Button(
             main_frame,
@@ -189,8 +199,11 @@ class BookMakerApp(Frame):
         log_label.grid(
             row=5, column=0, sticky=W, pady=(7, 0)
         )
+        log_clear_button.grid(
+            row=5, column=1, sticky=E, padx=(0, 10), pady=(0, 7)
+        )
         log_export_button.grid(
-            row=5, column=1, columnspan=2, sticky=E, pady=(0, 7)
+            row=5, column=2, sticky=E, pady=(0, 7)
         )
         log_box.grid(
             row=6, column=0, columnspan=3, sticky=NSEW
@@ -337,6 +350,15 @@ class BookMakerApp(Frame):
                 'エラー',
                 '実行されていないため停止することができません\n実行を行ったうえで停止することができます'
             )
+
+    def _clear_log(self):
+        """
+        When user clicked "ログをクリア"
+        Delete all the content in log box
+        :return:
+        """
+        self.log_box.delete('1.0', END)
+        self.log_box_line_count = 1.0
 
     def _export_log(self):
         """

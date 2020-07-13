@@ -21,7 +21,11 @@ class Watcher(threading.Thread):
         Run the observer for watching the directory.
         """
         while self.event.wait():
-            self.queue.put(Message(LogStatus.INFO, 'Watching %s files' % ', '.join(self.extensions)))
+            self.queue.put(
+                Message(
+                    LogStatus.INFO, 'Watching %s files in %s' % (', '.join(self.extensions), self.input_path)
+                )
+            )
             event_handler = Handler(
                 queue=self.queue,
                 input_path=self.input_path,

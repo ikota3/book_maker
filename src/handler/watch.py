@@ -42,8 +42,8 @@ class Watcher(threading.Thread):
             except Exception as e:
                 self.observer.unschedule_all()
                 self.observer.stop()
+                self.observer.join()
                 self.queue.put(Message(LogStatus.COMPLETED, 'End Observer'))
-            self.observer.join()
 
     def set_event(self):
         """
@@ -58,5 +58,5 @@ class Watcher(threading.Thread):
         self.event.clear()
         self.observer.unschedule_all()
         self.observer.stop()
-        self.queue.put(Message(LogStatus.COMPLETED, 'End Observer'))
         self.observer.join()
+        self.queue.put(Message(LogStatus.COMPLETED, 'End Observer'))

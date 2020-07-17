@@ -1,5 +1,5 @@
-import os
 import math
+from functools import partial
 from queue import Queue
 from datetime import datetime
 from tkinter import (
@@ -24,11 +24,9 @@ from tkinter import (
 )
 from tkinter.ttk import Combobox
 from src.handler.watch import Watcher
+from src.gui.app_constants import FILE_TYPES
+from src.gui.app_service import validate_dir, validate_file_type, ValidateError
 from src.constants.log_constants import LogStatus
-
-FILE_TYPES = [
-    'pdf'
-]
 
 ROOT = Tk()
 
@@ -45,9 +43,9 @@ class BookMakerApp(Frame):
         self.master.resizable(0, 0)
         self.master.title('Book Maker')
 
-        self.dir_to_watch_path = StringVar()
+        self.watch_dir_path = StringVar()
         self.output_dir_path = StringVar()
-        self.file_type_value = StringVar()
+        self.file_type = StringVar()
         self.log_box = None
         self.log_box_line_count = 1.0
         self.queue = Queue()
@@ -64,20 +62,25 @@ class BookMakerApp(Frame):
         main_frame = Frame(self)
         main_frame.grid(row=0, column=0, sticky=NSEW, padx=10, pady=10)
 
+        # Function for asking directory
+        def _ask_folder(dir_path):
+            path = filedialog.askdirectory()
+            dir_path.set(path)
+
         # Dir to watch
-        dir_to_watch_label = Label(main_frame, text='監視対象ディレクトリ')
+        dir_to_watch_label = Label(main_frame, text='監視ディレクトリ')
         dir_to_watch_entry = Entry(
             main_frame,
             relief='solid',
             borderwidth=1,
-            textvariable=self.dir_to_watch_path
+            textvariable=self.watch_dir_path,
         )
         dir_to_watch_button = Button(
             main_frame,
             text='参照',
             relief='solid',
             borderwidth=1,
-            command=self._ask_watch_folder
+            command=partial(_ask_folder, self.watch_dir_path)
         )
 
         # Output dir
@@ -93,7 +96,7 @@ class BookMakerApp(Frame):
             text='参照',
             relief='solid',
             borderwidth=1,
-            command=self._ask_output_folder
+            command=partial(_ask_folder, self.output_dir_path)
         )
 
         # File type
@@ -102,7 +105,7 @@ class BookMakerApp(Frame):
             main_frame,
             state='readonly',
             values=FILE_TYPES,
-            textvariable=self.file_type_value
+            textvariable=self.file_type
         )
         file_type_combobox.current(0)
 
@@ -217,57 +220,25 @@ class BookMakerApp(Frame):
         self.columnconfigure(0, weight=1)
         main_frame.columnconfigure(1, weight=1)
 
-    def _ask_watch_folder(self):
-        """
-        When user clicked "参照" for watch dir
-        Pop up the filedialog for asking directory, and fill the path which user selected
-        """
-        path = filedialog.askdirectory()
-        self.dir_to_watch_path.set(path)
-
-    def _ask_output_folder(self):
-        """
-        When user clicked "参照" for output dir
-        Pop up the filedialog for asking directory, and fill the path which user selected
-        """
-        path = filedialog.askdirectory()
-        self.output_dir_path.set(path)
-
     def _execute(self):
         """
         When user clicked "実行"
         Kick to handler
         """
 
-        # Check watch path is correct
-        if not self.dir_to_watch_path.get():
-            messagebox.showerror('入力エラー', '監視対象のディレクトリを選択してください')
-            return
-        if not os.path.isdir(self.dir_to_watch_path.get()):
-            messagebox.showerror('入力エラー', 'ディレクトリではありません')
-            return
-
-        # Check output path is correct
-        if not self.output_dir_path.get():
-            messagebox.showerror('入力エラー', '出力対象のディレクトリを選択してください')
-            return
-        if not os.path.isdir(self.output_dir_path.get()):
-            messagebox.showerror('入力エラー', 'ディレクトリではありません')
-            return
-
-        # Check file type is correct
-        if not self.file_type_value.get() or not self.file_type_value.get() in FILE_TYPES:
-            messagebox.showerror(
-                '入力エラー',
-                'ファイルの種類が選択されていません\n' + ', '.join(FILE_TYPES) + 'の中から選択してください'
-            )
+        try:
+            validate_dir(self.watch_dir_path.get(), '監視')
+            validate_dir(self.output_dir_path.get(), '出力')
+            validate_file_type(self.file_type.get())
+        except ValidateError as e:
+            messagebox.showerror(e.args[0], e.args[1])
             return
 
         # If the watcher thread is running, show the message box
         if self.watcher_thread:
             will_switch = messagebox.askyesnocancel(
                 'エラー',
-                'すでに実行中です\n監視している対象ディレクトリを切り替えますか?'
+                'すでに実行中です\n監視しているディレクトリを切り替えますか?'
             )
             # If the user select no or cancel, return
             if not will_switch:
@@ -285,9 +256,9 @@ class BookMakerApp(Frame):
 
         self.watcher_thread = Watcher(
             queue=self.queue,
-            input_path=self.dir_to_watch_path.get(),
+            input_path=self.watch_dir_path.get(),
             output_path=self.output_dir_path.get(),
-            extensions=[self.file_type_value.get()],
+            extensions=[self.file_type.get()],
         )
         self.watcher_thread.start()
         self.watcher_thread.set_event()

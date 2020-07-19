@@ -1,4 +1,5 @@
 import math
+import threading
 from functools import partial
 from queue import Queue
 from datetime import datetime
@@ -225,7 +226,6 @@ class BookMakerApp(Frame):
         When user clicked "実行"
         Kick to handler
         """
-
         try:
             validate_dir(self.watch_dir_path.get(), '監視')
             validate_dir(self.output_dir_path.get(), '出力')

@@ -33,7 +33,7 @@ class Watcher(threading.Thread):
             )
 
             self.observer.schedule(event_handler, self.input_path, recursive=False)
-            self.observer.on_thread_stop()
+            self.observer.start()
             self.queue.put(Message(LogStatus.INFO, 'Start Observer'))
 
             while True:

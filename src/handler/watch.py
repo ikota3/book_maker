@@ -13,14 +13,13 @@ class Watcher(threading.Thread):
         super().__init__()
         self.queue = queue
         self.observer = Observer()
-        self.setDaemon(True)
         self.event = threading.Event()
 
     def run(self, *args, **kwargs):
         """
         Run the observer for watching the directory.
         """
-        while self.event.wait():
+        if self.event.wait():
             self.queue.put(
                 Message(
                     LogStatus.INFO, 'Watching %s files in %s' % (', '.join(self.extensions), self.input_path)
@@ -34,16 +33,13 @@ class Watcher(threading.Thread):
             )
 
             self.observer.schedule(event_handler, self.input_path, recursive=False)
-            self.observer.start()
+            self.observer.on_thread_stop()
             self.queue.put(Message(LogStatus.INFO, 'Start Observer'))
-            try:
-                while True:
-                    time.sleep(1)
-            except Exception as e:
-                self.observer.unschedule_all()
-                self.observer.stop()
-                self.observer.join()
-                self.queue.put(Message(LogStatus.COMPLETED, 'End Observer'))
+
+            while True:
+                if not self.event.is_set():
+                    break
+                time.sleep(1)
 
     def set_event(self):
         """
@@ -56,7 +52,5 @@ class Watcher(threading.Thread):
         Set the event flag to false, and stop the observer
         """
         self.event.clear()
-        self.observer.unschedule_all()
-        self.observer.stop()
-        self.observer.join()
+        self.observer.on_thread_stop()
         self.queue.put(Message(LogStatus.COMPLETED, 'End Observer'))

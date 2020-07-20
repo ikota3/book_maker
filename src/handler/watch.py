@@ -41,7 +41,7 @@ class Watcher(threading.Thread):
                     break
                 time.sleep(1)
 
-    def set_event(self):
+    def start_event(self):
         """
         Set the event flag to true, for running the event
         """
@@ -53,4 +53,6 @@ class Watcher(threading.Thread):
         """
         self.event.clear()
         self.observer.on_thread_stop()
+        self.observer.stop()
+        self.observer.join()
         self.queue.put(Message(LogStatus.COMPLETED, 'End Observer'))

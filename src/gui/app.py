@@ -1,5 +1,4 @@
 import math
-import threading
 from functools import partial
 from queue import Queue
 from datetime import datetime
@@ -26,7 +25,7 @@ from tkinter import (
 from tkinter.ttk import Combobox
 from src.handler.watch import Watcher
 from src.gui.app_constants import FILE_TYPES
-from src.gui.app_service import validate_dir, validate_file_type, ValidateError
+from src.gui.app_service import watcher_thread_is_alive, validate_dir, validate_file_type, ValidateError
 from src.constants.log_constants import LogStatus
 
 ROOT = Tk()
@@ -43,6 +42,7 @@ class BookMakerApp(Frame):
         self.master.geometry('+1000+100')
         self.master.resizable(0, 0)
         self.master.title('Book Maker')
+        self.master.protocol('WM_DELETE_WINDOW', self._exit_app)
 
         self.watch_dir_path = StringVar()
         self.output_dir_path = StringVar()
@@ -116,7 +116,7 @@ class BookMakerApp(Frame):
             text='実行',
             relief='solid',
             borderwidth=1,
-            command=self._execute
+            command=self._start
         )
 
         # Stop
@@ -221,7 +221,7 @@ class BookMakerApp(Frame):
         self.columnconfigure(0, weight=1)
         main_frame.columnconfigure(1, weight=1)
 
-    def _execute(self):
+    def _start(self):
         """
         When user clicked "実行"
         Kick to handler
@@ -235,23 +235,23 @@ class BookMakerApp(Frame):
             return
 
         # If the watcher thread is running, show the message box
-        if self.watcher_thread:
-            will_switch = messagebox.askyesnocancel(
+        if watcher_thread_is_alive(self.watcher_thread):
+            switching_watcher = messagebox.askyesnocancel(
                 'エラー',
                 'すでに実行中です\n監視しているディレクトリを切り替えますか?'
             )
             # If the user select no or cancel, return
-            if not will_switch:
+            if not switching_watcher:
                 return
             # If the user select yes, stop the watcher thread which exists
             self._stop()
         else:
             # If the watcher thread is not running, show the message
-            will_observe = messagebox.askyesnocancel(
+            start_observing = messagebox.askyesnocancel(
                 '監視',
                 '監視を始めますか?'
             )
-            if not will_observe:
+            if not start_observing:
                 return
 
         self.watcher_thread = Watcher(
@@ -261,10 +261,27 @@ class BookMakerApp(Frame):
             extensions=[self.file_type.get()],
         )
         self.watcher_thread.start()
-        self.watcher_thread.set_event()
-        self.after(100, self.insert_to_log_box)
+        self.watcher_thread.start_event()
+        self.after(100, self._insert_to_log_box)
 
-    def insert_to_log_box(self):
+    def _stop(self):
+        """
+        When user clicked "停止"
+        Tell the thread to stop the observer
+        """
+        # If the watcher thread exists, stop the thread
+        if watcher_thread_is_alive(self.watcher_thread):
+            self.watcher_thread.stop_event()
+            self.watcher_thread.join()
+            self.after(100, self._insert_to_log_box)
+        else:
+            # Show a message box, when watcher thread does not exist
+            messagebox.showwarning(
+                'エラー',
+                '実行されていないため停止することができません\n実行を行ったうえで停止することができます'
+            )
+
+    def _insert_to_log_box(self):
         """
         Insert received message from other thread to log box
         """
@@ -302,25 +319,8 @@ class BookMakerApp(Frame):
                 return
 
         # Recursively call function for always checking the queue is empty or not
-        if self.watcher_thread:
-            self.after(100, self.insert_to_log_box)
-
-    def _stop(self):
-        """
-        When user clicked "停止"
-        Tell the thread to stop the observer
-        """
-        # If the watcher thread exists, stop the thread
-        if self.watcher_thread:
-            self.watcher_thread.stop_event()
-            self.after(100, self.insert_to_log_box)
-            self.watcher_thread = None
-        else:
-            # Show a message box, when watcher thread does not exist
-            messagebox.showwarning(
-                'エラー',
-                '実行されていないため停止することができません\n実行を行ったうえで停止することができます'
-            )
+        if watcher_thread_is_alive(self.watcher_thread):
+            self.after(100, self._insert_to_log_box)
 
     def _clear_log(self):
         """
@@ -353,6 +353,22 @@ class BookMakerApp(Frame):
         log_text = self.log_box.get(1.0, 'end-1c')
         with open(file=f'{dir_name}/{filename}', mode='w', encoding='utf-8') as f:
             f.write(log_text)
+
+    def _exit_app(self):
+        """
+        When user clicked the exit button
+        Pop up the message box for asking to exit the app or not
+        """
+        _exit = messagebox.askyesnocancel(
+            '終了',
+            '処理を終了しますか?'
+        )
+        if not _exit:
+            return
+
+        if watcher_thread_is_alive(self.watcher_thread):
+            self._stop()
+        self.master.destroy()
 
     @classmethod
     def get_instance(cls, master=ROOT):

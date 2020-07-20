@@ -7,6 +7,18 @@ class ValidateError(Exception):
     pass
 
 
+def watcher_thread_is_alive(watcher_thread) -> None:
+    """
+    If watcher thread is alive, return True.
+    Otherwise False.
+    :param watcher_thread: thread instance of watcher.
+    :return: None.
+    """
+    if watcher_thread is not None and watcher_thread.is_alive():
+        return True
+    return False
+
+
 def _is_empty(str_: str) -> bool:
     """
     If the argument is not empty, return False.

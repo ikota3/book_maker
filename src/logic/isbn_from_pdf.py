@@ -1,4 +1,11 @@
-﻿import re
+﻿"""ISBNコードを取得
+
+PDFからISBNコードを取得する．
+
+"""
+
+
+import re
 import pyocr
 import tempfile
 import subprocess
@@ -11,19 +18,36 @@ PAGE_COUNT = 2
 
 
 class NoSuchOCRToolException(Exception):
+    """OCRがなかったときの例外クラス
+
+    OCRがなかったときに投げられる例外クラス．
+
+    """
     pass
 
 
 class NoSuchISBNException(Exception):
+    """ISBNコードがなかったときの例外クラス
+
+    ISBNコードがなかったときに投げられる例外クラス．
+
+    """
     pass
 
 
 def get_isbn_from_pdf(input_path):
-    """
-    Convert PDF to image and extract ISBN.
-    Using barcode or text extraction.
+    """PDFからISBNコードを取得
 
-    :return: ISBN
+    PDFを画像に変換し，いずれか二つの手法でISBNコードを取得する．
+    画像からバーコードを使ってISBNコードを取得．
+    または，画像から文字列を取得し，ISBNコードを取得．
+
+    Raises:
+        NoSuchOCRToolException: OCRがなかったときに発生
+        NoSuchISBNException: ISBNコードがなかったときに発生
+
+    Returns:
+        str: ISBNコード
     """
 
     input_path = input_path
@@ -33,10 +57,12 @@ def get_isbn_from_pdf(input_path):
     total_page_count = int(result.stdout.strip())
 
     with tempfile.TemporaryDirectory() as temp_path:
-        last_pages = convert_from_path(input_path,
-                                       first_page=total_page_count - PAGE_COUNT,
-                                       output_folder=temp_path,
-                                       fmt='jpeg')
+        last_pages = convert_from_path(
+            input_path,
+            first_page=total_page_count - PAGE_COUNT,
+            output_folder=temp_path,
+            fmt='jpeg'
+        )
         # extract ISBN from using barcode
         for page in last_pages:
             decoded_data = decode(page)
@@ -59,6 +85,13 @@ def get_isbn_from_pdf(input_path):
             texts.append(text)
         for text in texts:
             if re.search(r'ISBN978-[0-4]-[0-9]{4}-[0-9]{4}-[0-9]', text):
-                return re.findall(r'978-[0-4]-[0-9]{4}-[0-9]{4}-[0-9]', text).pop().replace('-', '')
+                return re.findall(
+                    r'978-[0-4]-[0-9]{4}-[0-9]{4}-[0-9]',
+                    text).pop().replace(
+                    '-',
+                    ''
+                )
 
-    raise NoSuchISBNException(f'Cannot get ISBN from image. Basename: {basename(input_path)}.')
+    raise NoSuchISBNException(
+        f'Cannot get ISBN from image. Basename: {basename(input_path)}.'
+    )

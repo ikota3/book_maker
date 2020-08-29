@@ -8,9 +8,9 @@ from tkinter import (
     E,
     W,
     EW,
-    END,
     NSEW,
     VERTICAL,
+    CHAR,
     Tk,
     Frame,
     Button,
@@ -48,7 +48,6 @@ class BookMakerApp(Frame):
         self.output_dir_path = StringVar()
         self.file_type = StringVar()
         self.log_box = None
-        self.log_box_line_count = 1.0
         self.queue = Queue()
         self.watcher_thread = None
 
@@ -130,7 +129,14 @@ class BookMakerApp(Frame):
 
         # Log
         log_label = Label(main_frame, text='ログ')
-        log_box = Text(main_frame, relief='solid', borderwidth=1, background='#121212', foreground='#ffffff')
+        log_box = Text(
+            main_frame,
+            relief='solid',
+            borderwidth=1,
+            background='#121212',
+            foreground='#ffffff',
+            wrap=None
+        )
         log_box.bind('<Key>', lambda e: "break")
         self.log_box = log_box
         # Set text color in the log box
@@ -139,12 +145,12 @@ class BookMakerApp(Frame):
             self.log_box.tag_configure(log_status.name, foreground=log_status.value)
 
         # Log scroll bar
-        scrollbar = Scrollbar(
+        scrollbar_vertical = Scrollbar(
             main_frame,
             orient=VERTICAL,
-            command=log_box.yview,
+            command=log_box.yview
         )
-        log_box['yscrollcommand'] = scrollbar.set
+        log_box.configure(yscrollcommand=scrollbar_vertical.set)
 
         # Clear log
         log_clear_button = Button(
@@ -212,7 +218,7 @@ class BookMakerApp(Frame):
         log_box.grid(
             row=6, column=0, columnspan=3, sticky=NSEW
         )
-        scrollbar.grid(
+        scrollbar_vertical.grid(
             row=6, column=1, columnspan=2, sticky=(N, S, E), padx=(1, 1), pady=(1, 1)
         )
 
@@ -290,29 +296,26 @@ class BookMakerApp(Frame):
             # Time
             log_time = '[' + datetime.now().strftime('%Y/%m/%d_%H:%M:%S') + '] '
             self.log_box.insert(
-                self.log_box_line_count,
+                'end',
                 log_time,
                 'log_time'
             )
-            self.log_box_line_count += len(log_time) / 100.0
 
             message_queue = self.queue.get()
             # Status
             log_status_message = f'<{message_queue.status.name}> '
             self.log_box.insert(
-                self.log_box_line_count,
+                'end',
                 log_status_message,
                 f'{message_queue.status.name}'
             )
-            self.log_box_line_count += len(log_status_message) / 100.0
 
             # Message
             log_message = message_queue.message + '\n'
             self.log_box.insert(
-                self.log_box_line_count,
+                'end',
                 log_message
             )
-            self.log_box_line_count = float(math.ceil(self.log_box_line_count))
 
             # If the log status was completed, return
             if message_queue.status is LogStatus.COMPLETED:
@@ -328,8 +331,7 @@ class BookMakerApp(Frame):
         Delete all the content in log box
         :return:
         """
-        self.log_box.delete('1.0', END)
-        self.log_box_line_count = 1.0
+        self.log_box.delete('1.0', 'end')
 
     def _export_log(self):
         """

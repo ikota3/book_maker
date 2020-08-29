@@ -50,11 +50,9 @@ def get_isbn_from_pdf(input_path):
         str: ISBNコード
     """
 
-    input_path = input_path
-    texts = []
     cmd = f'echo $(pdfinfo "{input_path}" | grep -E "^Pages" | sed -E "s/^Pages: +//")'
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-    total_page_count = int(result.stdout.strip())
+    cmd_result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    total_page_count = int(cmd_result.stdout.strip())
 
     with tempfile.TemporaryDirectory() as temp_path:
         last_pages = convert_from_path(
@@ -65,19 +63,20 @@ def get_isbn_from_pdf(input_path):
         )
         # extract ISBN from using barcode
         for page in last_pages:
-            decoded_data = decode(page)
-            for data in decoded_data:
-                if re.match('978', data[0].decode('utf-8', 'ignore')):
-                    return data[0].decode('utf-8', 'ignore').replace('-', '')
+            for decoded_page_data in decode(page):
+                if re.match('978', decoded_page_data[0].decode('utf-8', 'ignore')):
+                    return decoded_page_data[0].decode('utf-8', 'ignore').replace('-', '')
 
-        tools = pyocr.get_available_tools()
-        if len(tools) == 0:
-            raise NoSuchOCRToolException(f'Cannot find OCR tool.')
+        ocr_tools = pyocr.get_available_tools()
+        if len(ocr_tools) == 0:
+            raise NoSuchOCRToolException('Cannot find OCR tool.')
+
         # convert image to string and extract ISBN
-        tool = tools[0]
+        ocr_tool = ocr_tools[0]
         lang = 'jpn'
+        texts = []
         for page in last_pages:
-            text = tool.image_to_string(
+            text = ocr_tool.image_to_string(
                 page,
                 lang=lang,
                 builder=pyocr.builders.TextBuilder(tesseract_layout=3)

@@ -109,7 +109,8 @@ def book_info_from_google(isbn):
             return BookInfo(title=title, author=author)
     else:
         raise NoSuchBookInfoException(
-            f'Cannot get book info from Google. ISBN: {isbn}. Status Code: {res.status_code}.'
+            f'Cannot find book info from Google.\n'
+            f'ISBN: {isbn}. Status Code: {res.status_code}.'
         )
 
 
@@ -140,5 +141,6 @@ def book_info_from_openbd(isbn):
             return BookInfo(title=title, author=author)
     else:
         raise NoSuchBookInfoException(
-            f'Cannot get book info from OPENBD. ISBN: {isbn}. Status Code: {res.status_code}.'
+            f'Cannot find book info from OPENBD.\n'
+            f'ISBN: {isbn}. Status Code: {res.status_code}.'
         )

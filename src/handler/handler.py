@@ -86,7 +86,7 @@ class Handler(PatternMatchingEventHandler):
             self.queue.put(
                 Message(
                     LogStatus.INFO,
-                    f'<Google> title: {google_book_info.title}, author: {google_book_info.author}'
+                    f'<Google> Title: {google_book_info.title}, Author: {google_book_info.author}.'
                 )
             )
             self._rename_and_move_pdf(google_book_info, event_src_path)
@@ -102,7 +102,7 @@ class Handler(PatternMatchingEventHandler):
             self.queue.put(
                 Message(
                     LogStatus.INFO,
-                    f'<openBD> title: {openbd_book_info.title}, author: {openbd_book_info.author}'
+                    f'<openBD> Title: {openbd_book_info.title}, Author: {openbd_book_info.author}.'
                 )
             )
             self._rename_and_move_pdf(openbd_book_info, event_src_path)
@@ -133,7 +133,8 @@ class Handler(PatternMatchingEventHandler):
             self.queue.put(
                 Message(
                     LogStatus.WARNING,
-                    f'PDF file already exists! Move {os.path.basename(pdf_rename_path)} to {self.tmp_path}'
+                    f'{output_path_with_basename} already exists!\n'
+                    f'Move {os.path.basename(pdf_rename_path)} to {self.tmp_path}.'
                 )
             )
         else:
@@ -141,7 +142,7 @@ class Handler(PatternMatchingEventHandler):
             self.queue.put(
                 Message(
                     LogStatus.INFO,
-                    f'Move {os.path.basename(pdf_rename_path)} to {self.output_path}'
+                    f'Move {os.path.basename(pdf_rename_path)} to {self.output_path}.'
                 )
             )
 
@@ -159,6 +160,7 @@ class Handler(PatternMatchingEventHandler):
             '../../getISBN.sh'
         )
         event_src_path = event.src_path
+        self.queue.put(Message(LogStatus.INFO, f'File detected! {event_src_path}.'))
         cmd = f'{shell_path} {event_src_path}'
         result = subprocess.run(
             cmd,
@@ -173,7 +175,7 @@ class Handler(PatternMatchingEventHandler):
                 self.queue.put(
                     Message(
                         LogStatus.INFO,
-                        f'ISBN from Shell -> {isbn}'
+                        f'ISBN was found from shell: {isbn}.'
                     )
                 )
                 self._book_info_from_each_api(isbn, event_src_path)
@@ -184,7 +186,7 @@ class Handler(PatternMatchingEventHandler):
                 self.queue.put(
                     Message(
                         LogStatus.INFO,
-                        f'ISBN from Python -> {isbn}'
+                        f'ISBN was found from Python: {isbn}.'
                     )
                 )
                 self._book_info_from_each_api(isbn, event_src_path)
@@ -203,4 +205,6 @@ class Handler(PatternMatchingEventHandler):
             self.queue.put(
                 Message(
                     LogStatus.WARNING,
-                    f'Move {os.path.basename(event_src_path)} to {self.tmp_path}'))
+                    f'Move {os.path.basename(event_src_path)} to {self.tmp_path}.'
+                )
+            )

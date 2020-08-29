@@ -22,7 +22,7 @@ class Watcher(threading.Thread):
         if self.event.wait():
             self.queue.put(
                 Message(
-                    LogStatus.INFO, 'Watching %s files in %s' % (', '.join(self.extensions), self.input_path)
+                    LogStatus.INFO, 'Watching %s files in %s.' % (', '.join(self.extensions), self.input_path)
                 )
             )
             event_handler = Handler(
@@ -34,7 +34,7 @@ class Watcher(threading.Thread):
 
             self.observer.schedule(event_handler, self.input_path, recursive=False)
             self.observer.start()
-            self.queue.put(Message(LogStatus.INFO, 'Start Observer'))
+            self.queue.put(Message(LogStatus.INFO, 'Start Observer.'))
 
             while True:
                 if not self.event.is_set():
@@ -55,4 +55,4 @@ class Watcher(threading.Thread):
         self.observer.on_thread_stop()
         self.observer.stop()
         self.observer.join()
-        self.queue.put(Message(LogStatus.COMPLETED, 'End Observer'))
+        self.queue.put(Message(LogStatus.COMPLETED, 'End Observer.'))

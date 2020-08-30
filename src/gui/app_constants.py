@@ -1,8 +1,16 @@
+"""定数
+
+定数を格納する
+
+"""
+
+
+# 監視するファイルタイプ
 FILE_TYPES = [
     'pdf'
 ]
 
-# MESSAGE
+# メッセージ
 INPUT_ERROR = '入力エラー'
 SELECT_DIR_MESSAGE = '{0}ディレクトリを選択してください'
 IS_NOT_DIR_MESSAGE = '{0}ディレクトリに入力された値はディレクトリではありません'

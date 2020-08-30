@@ -1,6 +1,21 @@
+"""ログ生成に関する定数など
+
+ログメッセージ生成のための定数や，色の設定を行う．
+
+"""
+
+
 from collections import namedtuple
 from enum import Enum
 
+"""ログメッセージ
+
+ログメッセージを格納する
+
+Attributes:
+    status (:obj: `LogStatus`): ログのステータス 
+    message (str): ログのメッセージ
+"""
 Message = namedtuple('Message', [
     'status',
     'message'
@@ -8,11 +23,11 @@ Message = namedtuple('Message', [
 
 
 class LogStatus(Enum):
-    """
-    Enums for log status
-    The hex value is for colorizing the log
+    """ログメッセージの色
 
-    Fields:
+    ログメッセージの色を種類別に分ける
+
+    Attributes:
         INFO,
         WARNING,
         ERROR,

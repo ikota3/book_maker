@@ -1,4 +1,3 @@
-import math
 from functools import partial
 from queue import Queue
 from datetime import datetime
@@ -10,7 +9,6 @@ from tkinter import (
     EW,
     NSEW,
     VERTICAL,
-    CHAR,
     Tk,
     Frame,
     Button,
@@ -32,8 +30,17 @@ ROOT = Tk()
 
 
 class BookMakerApp(Frame):
-    """
-    Book Maker Application
+    """BookMakerApp
+
+    BookMakerAppのGUIを構築する
+
+    Attributes:
+        watch_dir_path (:obj: `StringVar`): 監視対象パス
+        output_dir_path (:obj: `StringVar`): 出力対象パス
+        file_type (:obj: `StringVar`): 拡張子の種類
+        log_box (:obj: `Text`): ログのテキストウィジェット
+        queue (:obj: `queue`): ログに出力する内容が格納されるキュー
+        watcher_thread (:obj: `threading.Thread`): 監視スレッド
     """
 
     def __init__(self, master):
@@ -54,8 +61,10 @@ class BookMakerApp(Frame):
         self._create_widgets()
 
     def _create_widgets(self):
-        """
-        Create all widgets
+        """ウィジェットを作成
+
+        ウィジェットを全て作成する
+
         """
 
         # Main Frame
@@ -228,9 +237,12 @@ class BookMakerApp(Frame):
         main_frame.columnconfigure(1, weight=1)
 
     def _start(self):
-        """
-        When user clicked "実行"
-        Kick to handler
+        """実行
+
+        実行を押下したときの動作内容
+        入力パラメータがあっているか，
+        監視スレッドがすでに生きているかをチェックする
+
         """
         try:
             validate_dir(self.watch_dir_path.get(), '監視')
@@ -271,9 +283,11 @@ class BookMakerApp(Frame):
         self.after(100, self._insert_to_log_box)
 
     def _stop(self):
-        """
-        When user clicked "停止"
-        Tell the thread to stop the observer
+        """停止
+
+        停止を押下したときの動作内容
+        監視スレッドが死んでいる場合は，メッセージを表示する
+
         """
         # If the watcher thread exists, stop the thread
         if watcher_thread_is_alive(self.watcher_thread):
@@ -288,8 +302,10 @@ class BookMakerApp(Frame):
             )
 
     def _insert_to_log_box(self):
-        """
-        Insert received message from other thread to log box
+        """ログにメッセージを追加
+
+        ログにメッセージを色付きで追加する
+
         """
         # If queue is not empty, insert message to log box
         if not self.queue.empty():
@@ -326,18 +342,20 @@ class BookMakerApp(Frame):
             self.after(100, self._insert_to_log_box)
 
     def _clear_log(self):
-        """
-        When user clicked "ログをクリア"
-        Delete all the content in log box
-        :return:
+        """ログクリア
+
+        ログをクリアを押下することで，
+        ログに表示されているものを全て削除する
+
         """
         self.log_box.delete('1.0', 'end')
 
     def _export_log(self):
-        """
-        When user clicked "ログを出力"
-        Pop up the filedialog for asking which directory to save the log file
-        Save the log file when user select yes, otherwise do not save
+        """ログ出力
+
+        ログを出力を押下することで，
+        ユーザが選択したディレクトリに保存する
+
         """
         dir_name = filedialog.Directory().show()
         if not dir_name:
@@ -357,9 +375,12 @@ class BookMakerApp(Frame):
             f.write(log_text)
 
     def _exit_app(self):
-        """
-        When user clicked the exit button
-        Pop up the message box for asking to exit the app or not
+        """アプリ終了
+
+        xボタンを押下し，
+        監視スレッドが生きている場合はメッセージを表示し，
+        スレッドを正常終了させて，アプリを閉じる
+
         """
         _exit = messagebox.askyesnocancel(
             '終了',
@@ -374,11 +395,10 @@ class BookMakerApp(Frame):
 
     @classmethod
     def get_instance(cls, master=ROOT):
-        """
-        Returns a singleton instance of BookMakerApp.
+        """アプリのインスタンス取得
 
-        :param master: default parameter is tk.Tk()
-        :return: Singleton BookMakerApp instance
+        BookMakerAppのインスタンスを返す
+
         """
         if not hasattr(cls, '_instance'):
             cls._instance = cls(master)

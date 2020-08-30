@@ -42,12 +42,15 @@ def get_isbn_from_pdf(input_path):
     画像からバーコードを使ってISBNコードを取得．
     または，画像から文字列を取得し，ISBNコードを取得．
 
+    Args:
+        input_path (str): ファイルパス
+
     Raises:
         NoSuchOCRToolException: OCRがなかったときに発生
         NoSuchISBNException: ISBNコードがなかったときに発生
 
     Returns:
-        str: ISBNコード
+        str: 本から取得したISBNコードを取得する．
     """
 
     cmd = f'echo $(pdfinfo "{input_path}" | grep -E "^Pages" | sed -E "s/^Pages: +//")'
@@ -61,7 +64,7 @@ def get_isbn_from_pdf(input_path):
             output_folder=temp_path,
             fmt='jpeg'
         )
-        # extract ISBN from using barcode
+        # バーコードを使ってISBNコードを取得する
         for page in last_pages:
             for decoded_page_data in decode(page):
                 if re.match('978', decoded_page_data[0].decode('utf-8', 'ignore')):
@@ -71,7 +74,7 @@ def get_isbn_from_pdf(input_path):
         if len(ocr_tools) == 0:
             raise NoSuchOCRToolException('Cannot find OCR tool.')
 
-        # convert image to string and extract ISBN
+        # テキスト化し，ISBNコードを取得する
         ocr_tool = ocr_tools[0]
         lang = 'jpn'
         texts = []

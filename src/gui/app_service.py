@@ -1,18 +1,35 @@
+"""GUIのバリデーター
+
+GUIの入力パラメーターのバリデーターチェックを行う
+
+"""
+
+
 import os
 from src.gui.app_constants import (FILE_TYPES, INPUT_ERROR, IS_NOT_DIR_MESSAGE, SELECT_DIR_MESSAGE,
                                    FILE_TYPE_IS_NOT_CHOSEN_MESSAGE, FILE_TYPE_IS_NOT_IN_THE_LIST_MESSAGE)
 
 
 class ValidateError(Exception):
+    """エラーになったときの例外クラス
+
+    エラーになったときに投げられる例外クラス．
+
+    """
     pass
 
 
 def watcher_thread_is_alive(watcher_thread) -> None:
-    """
-    If watcher thread is alive, return True.
-    Otherwise False.
-    :param watcher_thread: thread instance of watcher.
-    :return: None.
+    """監視スレッドが生きているか
+
+    監視スレッドが生きているかを判別する．
+
+    Args:
+        watcher_thread (threading.Thread): 監視スレッド
+
+    Returns:
+        bool: 監視スレッドが生きているときはTrue，
+            死んでいるときはFalseを返す．
     """
     if watcher_thread is not None and watcher_thread.is_alive():
         return True
@@ -20,11 +37,16 @@ def watcher_thread_is_alive(watcher_thread) -> None:
 
 
 def _is_empty(str_: str) -> bool:
-    """
-    If the argument is not empty, return False.
-    Otherwise True.
-    :param str_: string.
-    :return: boolean.
+    """文字列が空か
+
+    文字列が空であるかを判別する
+
+    Args:
+        str_ (str): 文字列
+
+    Returns:
+        bool: 文字列が空のときはTrue，
+            空でないときはFalseを返す．
     """
     if str_:
         return False
@@ -32,43 +54,56 @@ def _is_empty(str_: str) -> bool:
     return True
 
 
-def _is_dir(dir_path: str) -> bool:
+def _is_dir(file_path: str) -> bool:
+    """ディレクトリであるか
+
+    ディレクトリであるかを判別する
+
+    Args:
+        file_path (str): ファイルパス
+
+    Returns:
+        bool: ディレクトリであるときはTrue，
+            ディレクトリではないときはFalseを返す．
     """
-    If the argument is not dir, return False.
-    Otherwise True.
-    :param dir_path: string. directory path.
-    :return: boolean.
-    """
-    if _is_empty(dir_path):
+    if _is_empty(file_path):
         return False
 
-    if not os.path.isdir(dir_path):
+    if not os.path.isdir(file_path):
         return False
 
     return True
 
 
-def validate_dir(dir_path: str, dir_type: str) -> None:
+def validate_dir(file_path: str, dir_type: str) -> None:
+    """入力パラメータがディレクトリであるか
+
+    入力パラメータがディレクトリかを判別する
+
+    Args:
+        file_path (str): ファイルパス
+        dir_type (str): チェックするディレクトリの種類
+
+    Raises:
+        ValidateError: ディレクトリが空のときや，ディレクトリではないときに発生する．
     """
-    Validate dir_path.
-    :param dir_path: string. directory path.
-    :param dir_type: string. directory type.
-    :raise ValidateError: raise error, when validation fails.
-    :return: None.
-    """
-    if _is_empty(dir_path):
+    if _is_empty(file_path):
         raise ValidateError(INPUT_ERROR, SELECT_DIR_MESSAGE.format(dir_type))
 
-    if not _is_dir(dir_path):
+    if not _is_dir(file_path):
         raise ValidateError(INPUT_ERROR, IS_NOT_DIR_MESSAGE.format(dir_type))
 
 
 def validate_file_type(file_type: str) -> None:
-    """
-    Validate file_type.
-    :param file_type: string. file type.
-    :raise ValidateError: raise error, when validation fails.
-    :return: None.
+    """入力パラメータが正しい拡張子か
+
+    入力パラメータが正しい拡張子であるかを判別する
+
+    Args:
+        file_type (str): ファイルタイプ
+
+    Raises:
+        ValidateError: 入力した拡張子が空のときや，拡張子がFILE_TYPESにないときに発生する．
     """
     if _is_empty(file_type):
         raise ValidateError(

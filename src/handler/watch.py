@@ -1,4 +1,11 @@
-﻿import time
+﻿"""監視スレッド
+
+ディレクトリ監視スレッド制御
+
+"""
+
+
+import time
 import threading
 from watchdog.observers import Observer
 from src.handler.handler import Handler
@@ -6,6 +13,17 @@ from src.constants.log_constants import Message, LogStatus
 
 
 class Watcher(threading.Thread):
+    """監視スレッドクラス
+
+    監視する際に新たにスレッドをたてるためのクラス．
+
+    Attributes:
+        queue (obj: `queue`): GUI側に引き渡すためのキュー
+        input_path (str): 入力ディレクトリ
+        output_path (str): 出力ディレクトリ
+        extensions (list[str]): 拡張子パターン
+    """
+
     def __init__(self, queue, input_path, output_path, extensions):
         self.input_path = input_path
         self.output_path = output_path
@@ -16,8 +34,10 @@ class Watcher(threading.Thread):
         self.event = threading.Event()
 
     def run(self, *args, **kwargs):
-        """
-        Run the observer for watching the directory.
+        """監視スレッド開始
+
+        ディレクトリを監視するスレッドをたてる．
+
         """
         if self.event.wait():
             self.queue.put(
@@ -42,14 +62,18 @@ class Watcher(threading.Thread):
                 time.sleep(1)
 
     def start_event(self):
-        """
-        Set the event flag to true, for running the event
+        """イベント開始
+
+        イベントを開始することで，監視スレッドを開始させる．
+
         """
         self.event.set()
 
     def stop_event(self):
-        """
-        Set the event flag to false, and stop the observer
+        """イベント終了
+
+        イベントを終了させることで，監視スレッドを終了させる．
+
         """
         self.event.clear()
         self.observer.on_thread_stop()

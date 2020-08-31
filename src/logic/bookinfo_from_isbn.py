@@ -44,7 +44,7 @@ class BookInfo:
         return f'<{self.__class__.__name__}>{json.dumps(self.__dict__, indent=4, ensure_ascii=False)}'
 
 
-def _format_title(title):
+def _format_title(title: str) -> str:
     """タイトルを整形
 
     システム上保存できない文字列を置換や，全角空白を半角文字に変換を行う．
@@ -55,12 +55,13 @@ def _format_title(title):
     Returns:
         str: 整形後のタイトル
     """
+    # TODO Windowsドライブ上で保存できない文字列を一斉置換するようにする
     # 全角括弧、全角空白を半角スペースに置換
     title = re.sub('[（）　]', ' ', title).rstrip()
     return re.sub(' +', ' ', title)
 
 
-def _format_author(author):
+def _format_author(author: str) -> str:
     """著者を整形
 
     著者に関係のない文字列を削除する．
@@ -78,7 +79,7 @@ def _format_author(author):
     return re.sub('／.+', '', author)
 
 
-def book_info_from_google(isbn):
+def book_info_from_google(isbn: str) -> BookInfo:
     """Google Books API を使って本の情報を取得
 
     ISBNコードを使って，Google Books APIから本の情報を取得する．
@@ -114,7 +115,7 @@ def book_info_from_google(isbn):
         )
 
 
-def book_info_from_openbd(isbn):
+def book_info_from_openbd(isbn: str) -> BookInfo:
     """OPENBD を使って本の情報を取得
 
     Args:

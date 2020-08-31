@@ -9,7 +9,7 @@ import shutil
 import datetime
 import subprocess
 from watchdog.events import PatternMatchingEventHandler
-from src.logic.isbn_from_pdf import get_isbn_from_pdf, NoSuchISBNException, NoSuchOCRToolException
+from src.logic.isbn_from_pdf import get_isbn_from_pdf, NoSuchISBNException
 from src.logic.bookinfo_from_isbn import book_info_from_google, book_info_from_openbd, NoSuchBookInfoException
 from src.constants.log_constants import Message, LogStatus
 
@@ -191,15 +191,9 @@ class Handler(PatternMatchingEventHandler):
                 )
                 self._book_info_from_each_api(isbn, event_src_path)
 
-        except (NoSuchISBNException, NoSuchOCRToolException) as e:
+        except NoSuchISBNException as e:
             # ISBNコードが見つからなかったとき
-            if isinstance(e, NoSuchISBNException):
-                self.queue.put(Message(LogStatus.WARNING, e.args[0]))
-
-            # OCRツールが見つからなかったとき
-            if isinstance(e, NoSuchOCRToolException):
-                self.queue.put(Message(LogStatus.ERROR, e.args[0]))
-                raise
+            self.queue.put(Message(LogStatus.WARNING, e.args[0]))
 
             shutil.move(event_src_path, self.tmp_path)
             self.queue.put(

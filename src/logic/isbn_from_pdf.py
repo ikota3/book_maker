@@ -14,17 +14,6 @@ from os.path import basename
 from pyzbar.pyzbar import decode
 from pdf2image import convert_from_path
 
-PAGE_COUNT = 2
-
-
-class NoSuchOCRToolException(Exception):
-    """OCRがなかったときの例外クラス
-
-    OCRがなかったときに投げられる例外クラス．
-
-    """
-    pass
-
 
 class NoSuchISBNException(Exception):
     """ISBNコードがなかったときの例外クラス
@@ -35,7 +24,7 @@ class NoSuchISBNException(Exception):
     pass
 
 
-def get_isbn_from_pdf(input_path):
+def get_isbn_from_pdf(input_path: str) -> str:
     """PDFからISBNコードを取得
 
     PDFを画像に変換し，いずれか二つの手法でISBNコードを取得する．
@@ -46,8 +35,7 @@ def get_isbn_from_pdf(input_path):
         input_path (str): ファイルパス
 
     Raises:
-        NoSuchOCRToolException: OCRがなかったときに発生
-        NoSuchISBNException: ISBNコードがなかったときに発生
+        NoSuchISBNException: ISBNコードが見つからなかったときに発生
 
     Returns:
         str: 本から取得したISBNコードを取得する．
@@ -55,45 +43,89 @@ def get_isbn_from_pdf(input_path):
 
     cmd = f'echo $(pdfinfo "{input_path}" | grep -E "^Pages" | sed -E "s/^Pages: +//")'
     cmd_result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-    total_page_count = int(cmd_result.stdout.strip())
+    total_pages = int(cmd_result.stdout.strip())
+    if total_pages == 0:
+        raise NoSuchISBNException(
+            f'Cannot get ISBN from {basename(input_path)}.'
+        )
 
     with tempfile.TemporaryDirectory() as temp_path:
-        last_pages = convert_from_path(
+        # TODO 総ページ数が2以下のとき
+        last_page_images = convert_from_path(
             input_path,
-            first_page=total_page_count - PAGE_COUNT,
+            first_page=total_pages - 2,
             output_folder=temp_path,
             fmt='jpeg'
         )
-        # バーコードを使ってISBNコードを取得する
-        for page in last_pages:
-            for decoded_page_data in decode(page):
-                if re.match('978', decoded_page_data[0].decode('utf-8', 'ignore')):
-                    return decoded_page_data[0].decode('utf-8', 'ignore').replace('-', '')
 
-        ocr_tools = pyocr.get_available_tools()
-        if len(ocr_tools) == 0:
-            raise NoSuchOCRToolException('Cannot find OCR tool.')
+        # バーコードからISBNコードを取得する
+        isbn = get_isbn_from_barcode(last_page_images)
+        if isbn:
+            return isbn
 
-        # テキスト化し，ISBNコードを取得する
-        ocr_tool = ocr_tools[0]
-        lang = 'jpn'
-        texts = []
-        for page in last_pages:
-            text = ocr_tool.image_to_string(
-                page,
-                lang=lang,
-                builder=pyocr.builders.TextBuilder(tesseract_layout=3)
+        # 文字列からISBNコードを取得する
+        isbn = get_isbn_from_text(last_page_images)
+        if isbn:
+            return isbn
+
+        raise NoSuchISBNException(
+            f'Cannot get ISBN from {basename(input_path)}.'
+        )
+
+
+def get_isbn_from_barcode(page_images) -> str:
+    """バーコードからISBNコードを取得
+
+    画像からバーコードを使って，ISBNコードを取得する
+
+    Args:
+        page_images (PIL.Image): ページの画像
+
+    Returns:
+        str: ISBNコードを返す．
+            取得できないときはNoneを返す．
+    """
+    for page_image in page_images:
+        # バーコードからコードを抽出する
+        for decoded_image in decode(page_image):
+            # コードの中からISBNコードにあたるものを取得する
+            if re.match('978', decoded_image[0].decode('utf-8', 'ignore')):
+                return decoded_image[0].decode('utf-8', 'ignore').replace('-', '')
+
+
+def get_isbn_from_text(page_images) -> str:
+    """文字列からISBNコードを取得
+
+    画像からテキスト化を行い，ISBNコードを取得する
+
+    Args:
+        page_images (PIL.Image): ページの画像
+
+    Returns:
+        str: ISBNコードを返す．
+            取得できないときはNoneを返す．
+    """
+    ocr_tools = pyocr.get_available_tools()
+    if len(ocr_tools) == 0:
+        # OCRがなかったときは，テキスト抽出を利用してISBNコード取得処理を行わない
+        return
+
+    # テキスト化し，ISBNコードを取得する
+    ocr_tool = ocr_tools[0]
+    texts = []
+    for page_image in page_images:
+        text = ocr_tool.image_to_string(
+            page_image,
+            lang='jpn',
+            builder=pyocr.builders.TextBuilder(tesseract_layout=3)
+        )
+        texts.append(text)
+
+    for text in texts:
+        if re.search(r'ISBN978-[0-4]-[0-9]{4}-[0-9]{4}-[0-9]', text):
+            # TODO 取得してきたISBNコードが複数あるとき，どうする？
+            isbn_codes = re.findall(r'978-[0-4]-[0-9]{4}-[0-9]{4}-[0-9]', text)
+            return isbn_codes.pop().replace(
+                '-',
+                ''
             )
-            texts.append(text)
-        for text in texts:
-            if re.search(r'ISBN978-[0-4]-[0-9]{4}-[0-9]{4}-[0-9]', text):
-                return re.findall(
-                    r'978-[0-4]-[0-9]{4}-[0-9]{4}-[0-9]',
-                    text).pop().replace(
-                    '-',
-                    ''
-                )
-
-    raise NoSuchISBNException(
-        f'Cannot get ISBN from image. Basename: {basename(input_path)}.'
-    )

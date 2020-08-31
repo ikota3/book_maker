@@ -279,7 +279,6 @@ class BookMakerApp(Frame):
             extensions=[self.file_type.get()],
         )
         self.watcher_thread.start()
-        self.watcher_thread.start_event()
         self.after(100, self._insert_to_log_box)
 
     def _stop(self):

@@ -31,7 +31,7 @@ class Watcher(threading.Thread):
         super().__init__()
         self.queue = queue
         self.observer = Observer()
-        self.event = threading.Event()
+        self._stop_thread = False
 
     def run(self, *args, **kwargs):
         """監視スレッド開始
@@ -39,35 +39,26 @@ class Watcher(threading.Thread):
         ディレクトリを監視するスレッドをたてる．
 
         """
-        if self.event.wait():
-            self.queue.put(
-                Message(
-                    LogStatus.INFO, 'Watching %s files in %s.' % (', '.join(self.extensions), self.input_path)
-                )
+        self.queue.put(
+            Message(
+                LogStatus.INFO, 'Watching %s files in %s.' % (', '.join(self.extensions), self.input_path)
             )
-            event_handler = Handler(
-                queue=self.queue,
-                input_path=self.input_path,
-                output_path=self.output_path,
-                patterns=[f'*.{extension}' for extension in self.extensions],
-            )
+        )
+        event_handler = Handler(
+            queue=self.queue,
+            input_path=self.input_path,
+            output_path=self.output_path,
+            patterns=[f'*.{extension}' for extension in self.extensions],
+        )
 
-            self.observer.schedule(event_handler, self.input_path, recursive=False)
-            self.observer.start()
-            self.queue.put(Message(LogStatus.INFO, 'Start Observer.'))
+        self.observer.schedule(event_handler, self.input_path, recursive=False)
+        self.observer.start()
+        self.queue.put(Message(LogStatus.INFO, 'Start Observer.'))
 
-            while True:
-                if not self.event.is_set():
-                    break
-                time.sleep(1)
-
-    def start_event(self):
-        """イベント開始
-
-        イベントを開始することで，監視スレッドを開始させる．
-
-        """
-        self.event.set()
+        while True:
+            if self._stop_thread:
+                break
+            time.sleep(1)
 
     def stop_event(self):
         """イベント終了
@@ -75,7 +66,7 @@ class Watcher(threading.Thread):
         イベントを終了させることで，監視スレッドを終了させる．
 
         """
-        self.event.clear()
+        self._stop_thread = True
         self.observer.on_thread_stop()
         self.observer.stop()
         self.observer.join()

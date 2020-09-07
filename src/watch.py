@@ -159,7 +159,7 @@ class Handler(PatternMatchingEventHandler):
         """
         shell_path = os.path.join(
             os.path.dirname(__file__),
-            '../../getISBN.sh'
+            './shell/getISBN.sh'
         )
         event_src_path = event.src_path
         self.queue.put(

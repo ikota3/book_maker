@@ -4,10 +4,15 @@ GUIの入力パラメーターのバリデーターチェックを行う
 
 """
 
-
 import os
-from src.gui.app_constants import (FILE_TYPES, INPUT_ERROR, IS_NOT_DIR_MESSAGE, SELECT_DIR_MESSAGE,
-                                   FILE_TYPE_IS_NOT_CHOSEN_MESSAGE, FILE_TYPE_IS_NOT_IN_THE_LIST_MESSAGE)
+from app_constants import (
+    FILE_TYPES,
+    INPUT_ERROR,
+    IS_NOT_DIR_MESSAGE,
+    SELECT_DIR_MESSAGE,
+    FILE_TYPE_IS_NOT_CHOSEN_MESSAGE,
+    FILE_TYPE_IS_NOT_IN_THE_LIST_MESSAGE
+)
 
 
 class ValidateError(Exception):
@@ -19,7 +24,7 @@ class ValidateError(Exception):
     pass
 
 
-def watcher_thread_is_alive(watcher_thread) -> None:
+def watcher_thread_is_alive(watcher_thread) -> bool:
     """監視スレッドが生きているか
 
     監視スレッドが生きているかを判別する．

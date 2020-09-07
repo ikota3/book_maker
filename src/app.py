@@ -1,6 +1,6 @@
-from functools import partial
 from queue import Queue
 from datetime import datetime
+from functools import partial
 from tkinter import (
     N,
     S,
@@ -21,16 +21,14 @@ from tkinter import (
     messagebox
 )
 from tkinter.ttk import Combobox
-from src.handler.watch import Watcher
-from src.gui.app_constants import FILE_TYPES
-from src.gui.app_service import watcher_thread_is_alive, validate_dir, validate_file_type, ValidateError
-from src.constants.log_constants import LogStatus
-
-ROOT = Tk()
+from watch import Watcher
+from log_constants import LogStatus
+from app_constants import FILE_TYPES
+from app_service import watcher_thread_is_alive, validate_dir, validate_file_type, ValidateError
 
 
-class BookMakerApp(Frame):
-    """BookMakerApp
+class BookMakerView(Frame):
+    """BookMakerView
 
     BookMakerAppのGUIを構築する
 
@@ -43,13 +41,10 @@ class BookMakerApp(Frame):
         watcher_thread (:obj: `threading.Thread`): 監視スレッド
     """
 
-    def __init__(self, master):
-        super().__init__(master)
-        self.pack()
-        self.master.geometry('+1000+100')
-        self.master.resizable(0, 0)
-        self.master.title('Book Maker')
+    def __init__(self, *args, **kwargs):
+        super().__init__()
         self.master.protocol('WM_DELETE_WINDOW', self._exit_app)
+        self.pack()
 
         self.watch_dir_path = StringVar()
         self.output_dir_path = StringVar()
@@ -151,7 +146,8 @@ class BookMakerApp(Frame):
         # Set text color in the log box
         self.log_box.tag_configure('log_time', foreground='#43d8c9')
         for log_status in LogStatus:
-            self.log_box.tag_configure(log_status.name, foreground=log_status.value)
+            self.log_box.tag_configure(
+                log_status.name, foreground=log_status.value)
 
         # Log scroll bar
         scrollbar_vertical = Scrollbar(
@@ -204,8 +200,9 @@ class BookMakerApp(Frame):
             row=2, column=0, sticky=W, padx=(0, 7), pady=(10, 10)
         )
         file_type_combobox.grid(
-            row=2, column=1, columnspan=2, sticky=EW, padx=(7, 0), pady=(10, 10)
-        )
+            row=2, column=1, columnspan=2, sticky=EW, padx=(
+                7, 0), pady=(
+                10, 10))
 
         execute_button.grid(
             row=3, column=0, columnspan=3, pady=(10, 20)
@@ -228,8 +225,10 @@ class BookMakerApp(Frame):
             row=6, column=0, columnspan=3, sticky=NSEW
         )
         scrollbar_vertical.grid(
-            row=6, column=1, columnspan=2, sticky=(N, S, E), padx=(1, 1), pady=(1, 1)
-        )
+            row=6, column=1, columnspan=2, sticky=(
+                N, S, E), padx=(
+                1, 1), pady=(
+                1, 1))
 
         # Fit the main frame to master
         self.grid_rowconfigure(0, weight=1)
@@ -336,7 +335,8 @@ class BookMakerApp(Frame):
             if message_queue.status is LogStatus.COMPLETED:
                 return
 
-        # Recursively call function for always checking the queue is empty or not
+        # Recursively call function
+        # for always checking the queue is empty or not
         if watcher_thread_is_alive(self.watcher_thread):
             self.after(100, self._insert_to_log_box)
 
@@ -392,25 +392,16 @@ class BookMakerApp(Frame):
             self._stop()
         self.master.destroy()
 
-    @classmethod
-    def get_instance(cls, master=ROOT):
-        """アプリのインスタンス取得
 
-        BookMakerAppのインスタンスを返す
-
-        """
-        if not hasattr(cls, '_instance'):
-            cls._instance = cls(master)
-        else:
-            cls._instance.master = master
-        return cls._instance
-
-
-def main():
-    global ROOT
-    app = BookMakerApp(ROOT)
-    app.mainloop()
+class BookMakerApplication(Tk):
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+        self.title('Book Maker')
+        self.resizable(0, 0)
+        self.geometry('+1000+100')
+        BookMakerView(self).grid(sticky=NSEW)
 
 
 if __name__ == '__main__':
-    main()
+    app = BookMakerApplication()
+    app.mainloop()

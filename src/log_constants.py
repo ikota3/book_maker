@@ -13,7 +13,7 @@ from enum import Enum
 ログメッセージを格納する
 
 Attributes:
-    status (:obj: `LogStatus`): ログのステータス 
+    status (:obj: `LogStatus`): ログのステータス
     message (str): ログのメッセージ
 """
 Message = namedtuple('Message', [

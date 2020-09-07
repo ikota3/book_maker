@@ -1,17 +1,21 @@
-﻿"""ディレクトリ監視ハンドラー
+﻿"""監視スレッド
 
-ディレクトリを監視する際の操作内容．
+ディレクトリ監視スレッド制御
 
 """
 
+
 import os
+import time
 import shutil
 import datetime
+import threading
 import subprocess
+from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
-from src.logic.isbn_from_pdf import get_isbn_from_pdf, NoSuchISBNException
-from src.logic.bookinfo_from_isbn import book_info_from_google, book_info_from_openbd, NoSuchBookInfoException
-from src.constants.log_constants import Message, LogStatus
+from logic.isbn_from_pdf import get_isbn_from_pdf, NoSuchISBNException
+from logic.isbn_to_info import book_info_from_google, book_info_from_openbd, NoSuchBookInfoException
+from log_constants import Message, LogStatus
 
 
 class Handler(PatternMatchingEventHandler):
@@ -134,9 +138,7 @@ class Handler(PatternMatchingEventHandler):
                 Message(
                     LogStatus.WARNING,
                     f'{output_path_with_basename} already exists!\n'
-                    f'Move {os.path.basename(pdf_rename_path)} to {self.tmp_path}.'
-                )
-            )
+                    f'Move {os.path.basename(pdf_rename_path)} to {self.tmp_path}.'))
         else:
             shutil.move(pdf_rename_path, self.output_path)
             self.queue.put(
@@ -160,7 +162,10 @@ class Handler(PatternMatchingEventHandler):
             '../../getISBN.sh'
         )
         event_src_path = event.src_path
-        self.queue.put(Message(LogStatus.INFO, f'File detected! {event_src_path}.'))
+        self.queue.put(
+            Message(
+                LogStatus.INFO,
+                f'File detected! {event_src_path}.'))
         cmd = f'{shell_path} {event_src_path}'
         result = subprocess.run(
             cmd,
@@ -199,6 +204,67 @@ class Handler(PatternMatchingEventHandler):
             self.queue.put(
                 Message(
                     LogStatus.WARNING,
-                    f'Move {os.path.basename(event_src_path)} to {self.tmp_path}.'
-                )
-            )
+                    f'Move {os.path.basename(event_src_path)} to {self.tmp_path}.'))
+
+
+class Watcher(threading.Thread):
+    """監視スレッドクラス
+
+    監視する際に新たにスレッドをたてるためのクラス．
+
+    Attributes:
+        queue (obj: `queue`): GUI側に引き渡すためのキュー
+        input_path (str): 入力ディレクトリ
+        output_path (str): 出力ディレクトリ
+        extensions (list[str]): 拡張子パターン
+    """
+
+    def __init__(self, queue, input_path, output_path, extensions):
+        self.input_path = input_path
+        self.output_path = output_path
+        self.extensions = extensions
+        super().__init__()
+        self.queue = queue
+        self.observer = Observer()
+        self._stop_thread = False
+
+    def run(self, *args, **kwargs):
+        """監視スレッド開始
+
+        ディレクトリを監視するスレッドをたてる．
+
+        """
+        self.queue.put(
+            Message(
+                LogStatus.INFO,
+                'Watching %s files in %s.' %
+                (', '.join(
+                    self.extensions),
+                    self.input_path)))
+        event_handler = Handler(
+            queue=self.queue,
+            input_path=self.input_path,
+            output_path=self.output_path,
+            patterns=[f'*.{extension}' for extension in self.extensions],
+        )
+
+        self.observer.schedule(event_handler, self.input_path, recursive=False)
+        self.observer.start()
+        self.queue.put(Message(LogStatus.INFO, 'Start Observer.'))
+
+        while True:
+            if self._stop_thread:
+                break
+            time.sleep(1)
+
+    def stop_event(self):
+        """イベント終了
+
+        イベントを終了させることで，監視スレッドを終了させる．
+
+        """
+        self._stop_thread = True
+        self.observer.on_thread_stop()
+        self.observer.stop()
+        self.observer.join()
+        self.queue.put(Message(LogStatus.COMPLETED, 'End Observer.'))
